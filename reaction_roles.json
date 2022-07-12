@@ -1,0 +1,80 @@
+{
+    "games": {
+        "msg_id": 992946891425849426,
+        "embed": {
+            "title": "R\u00f4les de jeux",
+            "color": 16765696
+        },
+        "reactions": {
+            "Gamerz": {
+                "role": 915564599498121217,
+                "emoji": "\ud83c\udfae",
+                "description": "Les membres peuvent ping pour jouer avec vous"
+            },
+            "Minecraft": {
+                "role": 916430255592456252,
+                "emoji": 916429226457071666
+            },
+            "Valorant": {
+                "role": 916430890027085864,
+                "emoji": 916430799513985024
+            },
+            "Clash Royale": {
+                "role": 916430937418514462,
+                "emoji": 916431702212091904
+            },
+            "Clash Mini": {
+                "role": 916431139042897931,
+                "emoji": 916432625730715658
+            },
+            "CSGO": {
+                "role": 925105530719068211,
+                "emoji": 925106726355763290
+            },
+            "Overwatch": {
+                "role": 926109858426658816,
+                "emoji": 926110276510711848
+            },
+            "Sea of Thieves": {
+                "role": 926111381617508413,
+                "emoji": 926112159790956594
+            },
+            "Brawlhalla": {
+                "role": 929293992598835211,
+                "emoji": 929293548686286888
+            },
+            "Brawl Stars": {
+                "role": 929676417170554920,
+                "emoji": 929676667016867870
+            },
+            "Lost Ark": {
+                "role": 946150784058408980,
+                "emoji": 946150471268184064
+            },
+            "Fall Guys": {
+                "role": 992878158795784212,
+                "emoji": 992878050519818411
+            }
+        }
+    },
+    "pings": {
+        "msg_id": 992947118417391647,
+        "channel_id": 807899717832409099,
+        "embed": {
+            "title": "R\u00f4les de ping",
+            "color": 16765696
+        },
+        "reactions": {
+            "sondages": {
+                "role": 929297384503136286,
+                "emoji": "\ud83d\udd14",
+                "description": "Pour des sondages en tout genre"
+            },
+            "freestuff": {
+                "role": 927811800030933102,
+                "emoji": "\ud83d\udcb8",
+                "description": "Quand des jeux gratuits sont dans <#927655512089190510>"
+            }
+        }
+    }
+}

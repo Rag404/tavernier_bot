@@ -17,7 +17,8 @@ extensions = [
     "status",
     "reaction_role",
     "utilities",
-    "voice_room"
+    "voice_room",
+    "help"
 ]
 
 print("Loading cogs...")

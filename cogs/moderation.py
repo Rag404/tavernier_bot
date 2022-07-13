@@ -1,4 +1,4 @@
-from discord import Cog, ApplicationContext, Bot, Member, slash_command, option
+from discord import Cog, ApplicationContext, Bot, Member, default_permissions, slash_command, option
 from discord.utils import get
 from my_utils import log
 
@@ -10,15 +10,11 @@ class Moderation(Cog):
 
 
     @slash_command(name='kick')
+    @default_permissions(kick_members=True)
     @option("member", description="Le membre à expulser")
     @option("reason", description="La raison de l'expulsion")
     async def kick_command(self, ctx: ApplicationContext, member: Member, reason: str = "Non précisée..."):
         """Expulser un membre"""
-
-        # Check if author can't kick members and target is owner
-        if not ctx.author.guild_permissions.kick_members or member == ctx.guild.owner:
-            await ctx.respond("Vous n'avez pas les permissions requises pour effectuer cette commande !", ephemeral=True)
-            return
 
         # Check if bot can kick the member
         bot = ctx.guild.get_member(self.bot.user.id)
@@ -32,15 +28,11 @@ class Moderation(Cog):
 
 
     @slash_command(name='ban')
+    @default_permissions(ban_members=True)
     @option("member", description="Le membre à bannir")
     @option("reason", description="La raison du bannissement")
     async def kick(self, ctx: ApplicationContext, member: Member, reason: str = "Non précisée..."):
         """Bannir un membre"""
-
-        # Check if author can't ban/unban members and target is owner
-        if not ctx.author.guild_permissions.ban_members or member == ctx.guild.owner:
-            await ctx.respond("Vous n'avez pas les permissions requises pour effectuer cette commande !", ephemeral=True)
-            return
 
         # Check if bot can ban the member
         bot = ctx.guild.get_member(self.bot.user.id)
@@ -54,14 +46,10 @@ class Moderation(Cog):
 
 
     @slash_command(name='unban')
+    @default_permissions(ban_members=True)
     @option("member", description="Le pseudo et le tag du membre que vous voulez dé-bannir. Ex: Michel#3516")
     async def unban(self, ctx: ApplicationContext, member: str):
         """Révoquer le bannissement d'un membre"""
-
-        # Check if author can't ban/unban members
-        if not ctx.author.guild_permissions.ban_members:
-            await ctx.respond("Vous n'avez pas les permissions requises pour effectuer cette commande !", ephemeral=True)
-            return
 
         try:
             member_name, member_discriminator = member.split('#')
@@ -83,15 +71,11 @@ class Moderation(Cog):
 
 
     @slash_command(name='mute-text')
+    @default_permissions(manage_messages=True)
     @option("member", description="Le membre à rendre muet")
     @option("reason", description="La raison du mute")
     async def mute_text(self, ctx: ApplicationContext, member: Member, reason: str = "Non précisée..."):
         """Rendre muet un membre"""
-
-        # Check if author can't manage messages and target is owner
-        if not ctx.author.guild_permissions.manage_messages or member == ctx.guild.owner:
-            await ctx.respond("Vous n'avez pas les permissions requises pour effectuer cette commande !", ephemeral=True)
-            return
 
         # Check if bot can ban the member
         bot = ctx.guild.get_member(self.bot.user.id)
@@ -116,15 +100,11 @@ class Moderation(Cog):
 
 
     @slash_command(name='clear')
+    @default_permissions(manage_messages=True)
     @option("number", description="Nombre de messages à supprimer entre 1 et 100", min_value=1, max_value=100)
     @option("member", decription="Spécifier un membre")
     async def clear_messages(self, ctx: ApplicationContext, number: int, member: Member = None):
         """Supprimer un certain nombre de messages ou d'un certain membre"""
-
-        # Check if author can't manage messages or target is owner
-        if not ctx.author.guild_permissions.manage_messages or member == ctx.guild.owner:
-            await ctx.respond("Vous n'avez pas les permissions requises pour effectuer cette commande !", ephemeral=True)
-            return
 
         # Define the check in case member is specified
         def checkMember(message):

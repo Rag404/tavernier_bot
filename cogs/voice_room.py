@@ -91,7 +91,7 @@ class VoiceRoom(Cog):
             del rooms[channel.id]
 
 
-    room_commands = SlashCommandGroup("room", "Commandes pour les rooms")
+    room_commands = SlashCommandGroup("room", "Gérez votre room")
 
 
     @room_commands.command(name="rename")

@@ -66,10 +66,11 @@ class VoiceRoom(Cog):
                 if len(room.members) == 0:
                     await room.delete(reason="Gaming room vide")
                     log(f'The room "{room.name}" has been deleted')
-                elif self.is_room_leader(member.id):
+                elif self.is_room_leader(member):
                     new_leader = choice(room.members)
                     rooms[room.id]["leader"] = new_leader.id
                     log(new_leader, f'is the new leader of the room "{room.name}"')
+                    await room.send(f"L'ancien leader a quitté, le nouveau leader est {new_leader.mention}")
 
 
     @Cog.listener()
@@ -190,7 +191,22 @@ class VoiceRoom(Cog):
         
         log(ctx.author, f'has unlocked the room "{channel.name}"')
         await ctx.respond("La room a été déverrouillée.")
-
+    
+    
+    @room_commands.command(name="infos")
+    async def room_infos(self, ctx: ApplicationContext):
+        """Obtenir des informations sur la room"""
+        if not ctx.author.voice:
+            await ctx.respond("Vous devez être dans une room pour pouvoir en montrer les infos !", ephemeral=True)
+            return
+        channel = ctx.author.voice.channel
+        if not channel.id in rooms:
+            await ctx.respond("Vous devez être dans une room pour pouvoir en montrer les infos !", ephemeral=True)
+            return
+        
+        leader = ctx.guild.get_member(rooms[channel.id]["leader"])
+        states = {True: "oui", False: "non"}
+        await ctx.respond(f"Nom : {channel.name} \nLeader : {leader.mention} \nVerrouillée : {states[rooms[channel.id]['locked']]} \nNom automatique : {states[rooms[channel.id]['auto_name']]}")
 
 
     @room_commands.command(name="blacklist")

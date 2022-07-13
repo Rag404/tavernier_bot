@@ -2,3 +2,5 @@
 bot-env
 *__pycache__
 _main.py
+reaction_roles_backup.json
+test.test

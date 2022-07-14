@@ -11,14 +11,14 @@ client = commands.Bot(intents=intents, debug_guilds=guilds)
 
 
 extensions = [
+    "ext_commands",
     "moderation",
     "infochannels",
     "welcome",
     "status",
     "reaction_role",
     "utilities",
-    "voice_room",
-    "help"
+    "voice_room"
 ]
 
 print("Loading cogs...")

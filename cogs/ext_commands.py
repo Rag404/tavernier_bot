@@ -16,9 +16,9 @@ class ExtCommands(Cog):
         try:
             self.bot.load_extension(extension)
         except Exception as e:
-            await ctx.respond(f"```\n{e}\n```", ephemeral=True)
+            await ctx.respond(f"Error :\n```\n{e}\n```", ephemeral=True)
         else:
-            await ctx.res(f"`{extension}` is now loaded", ephemeral=True)
+            await ctx.respond(f"`{extension}` is now loaded", ephemeral=True)
 
 
     @ext_commands.command(name="unload")
@@ -27,9 +27,9 @@ class ExtCommands(Cog):
         try:
             self.bot.unload_extension(extension)
         except Exception as e:
-            await ctx.respond(f"```\n{e}\n```", ephemeral=True)
+            await ctx.respond(f"Error :\n```\n{e}\n```", ephemeral=True)
         else:
-            await ctx.res(f"`{extension}` is now unloaded", ephemeral=True)
+            await ctx.respond(f"`{extension}` is now unloaded", ephemeral=True)
     
     
     @ext_commands.command(name="reload")
@@ -38,9 +38,9 @@ class ExtCommands(Cog):
         try:
             self.bot.reload_extension(extension)
         except Exception as e:
-            await ctx.respond(f"```\n{e}\n```", ephemeral=True)
+            await ctx.respond(f"Error :\n```\n{e}\n```", ephemeral=True)
         else:
-            await ctx.res(f"`{extension}` has been reloaded", ephemeral=True)
+            await ctx.respond(f"`{extension}` has been reloaded", ephemeral=True)
     
     
     @Cog.listener()

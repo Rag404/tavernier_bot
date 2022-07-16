@@ -7,7 +7,7 @@ class ExtCommands(Cog):
         self.bot: Bot = bot
     
     
-    ext_commands = SlashCommandGroup("extension")
+    ext_commands = SlashCommandGroup("extension", "Contrôler les extensions")
 
 
     @ext_commands.command(name="load")

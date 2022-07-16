@@ -59,18 +59,17 @@ class VoiceRoom(Cog):
                 
                 await member.move_to(new_room, reason="Téléporté dans une nouvelle room")
                 log(member, f'has created the room "{new_room.name}"')
-        
-        elif before.channel:
-            if before.channel.id in rooms:
-                room = before.channel
-                if len(room.members) == 0:
-                    await room.delete(reason="Gaming room vide")
-                    log(f'The room "{room.name}" has been deleted')
-                elif self.is_room_leader(member):
-                    new_leader = choice(room.members)
-                    rooms[room.id]["leader"] = new_leader.id
-                    log(new_leader, f'is the new leader of the room "{room.name}"')
-                    await room.send(f"L'ancien leader a quitté, le nouveau leader est {new_leader.mention}")
+
+            elif before.channel:
+                if before.channel.id in rooms and after.channel.id not in rooms:
+                    room = before.channel
+                    if len(room.members) == 0:
+                        await room.delete(reason="Gaming room vide")
+                    elif member.id == rooms[room.id]["leader"]:
+                        new_leader = choice(room.members)
+                        rooms[room.id]["leader"] = new_leader.id
+                        log(new_leader, f'is the new leader of the room "{room.name}"')
+                        await room.send(f"L'ancien leader a quitté, le nouveau leader est {new_leader.mention}")
 
 
     @Cog.listener()
@@ -90,6 +89,7 @@ class VoiceRoom(Cog):
     async def on_guild_channel_delete(self, channel):
         if channel.id in rooms:
             del rooms[channel.id]
+            log(f'The room "{channel.name}" has been deleted')
 
 
     room_commands = SlashCommandGroup("room", "Gérez votre room")

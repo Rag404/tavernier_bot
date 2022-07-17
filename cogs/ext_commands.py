@@ -1,4 +1,4 @@
-from discord import ApplicationContext, Bot, Cog, SlashCommandGroup
+from discord import ApplicationContext, Bot, Cog, SlashCommandGroup, default_permissions
 from discord.ext.commands import NotOwner, is_owner
 
 
@@ -11,6 +11,7 @@ class ExtCommands(Cog):
 
 
     @ext_commands.command(name="load")
+    @default_permissions(administrator=True)
     @is_owner()
     async def load_ext(self, ctx: ApplicationContext, extension: str):
         try:
@@ -22,6 +23,7 @@ class ExtCommands(Cog):
 
 
     @ext_commands.command(name="unload")
+    @default_permissions(administrator=True)
     @is_owner()
     async def load_ext(self, ctx: ApplicationContext, extension: str):
         try:
@@ -33,6 +35,7 @@ class ExtCommands(Cog):
     
     
     @ext_commands.command(name="reload")
+    @default_permissions(administrator=True)
     @is_owner()
     async def load_ext(self, ctx: ApplicationContext, extension: str):
         try:

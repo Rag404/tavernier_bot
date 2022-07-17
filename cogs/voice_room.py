@@ -9,6 +9,23 @@ redirect_voice_channel = 996160558371979355
 rooms_category = 996159603324768276
 rooms = {}
 
+leader_overwrites = PermissionOverwrite(manage_channels=True, manage_permissions=True, move_members=True, mute_members=True, deafen_members=True, manage_events=True)
+
+
+def is_room_leader(member: Member) -> bool:
+    if member.voice:
+        if member.voice.channel.id in rooms:
+            room = member.voice.channel
+            if member.id == rooms[room.id]["leader"]:
+                return True
+    return False
+
+
+def get_member_game_name(member: Member) -> Union[Game, None]:
+    for activity in member.activities:
+        if activity.type == ActivityType.playing:
+            return activity.name
+
 
 class VoiceRoom(Cog):
     """Créer automatiquement des salons vocaux"""
@@ -17,21 +34,8 @@ class VoiceRoom(Cog):
         self.bot: Bot = bot
 
 
-    def is_room_leader(self, member: Member) -> bool:
-        if member.voice:
-            if member.voice.channel.id in rooms:
-                room = member.voice.channel
-                if member.id == rooms[room.id]["leader"]:
-                    return True
-        return False
-
-    def get_member_game_name(self, member: Member) -> Union[Game, None]:
-        for activity in member.activities:
-            if activity.type == ActivityType.playing:
-                return activity.name
-
     async def rename_room_to_game(self, room: VoiceChannel, member: Member) -> None:
-        if game := self.get_member_game_name(member):
+        if game := get_member_game_name(member):
             if room.name != game:
                 await room.edit(name=game, reason="Le chef de la room a changé de jeu")
             return
@@ -43,12 +47,12 @@ class VoiceRoom(Cog):
             if after.channel.id == redirect_voice_channel:
                 muted_role = get(member.guild.roles, name="Muted")
                 overwrites = {
-                    member: PermissionOverwrite(manage_channels=True, manage_permissions=True, move_members=True, mute_members=True, deafen_members=True, manage_events=True),
+                    member: leader_overwrites,
                     muted_role: PermissionOverwrite(speak=False)
                 }
                 
                 category = member.guild.get_channel(rooms_category)
-                room_name = self.get_member_game_name(member) or member.display_name
+                room_name = get_member_game_name(member) or member.display_name
                 new_room = await member.guild.create_voice_channel(name=room_name, category=category, overwrites=overwrites, reason=f"A créé une room")
                 
                 rooms[new_room.id] = {
@@ -60,16 +64,16 @@ class VoiceRoom(Cog):
                 await member.move_to(new_room, reason="Téléporté dans une nouvelle room")
                 log(member, f'has created the room "{new_room.name}"')
 
-            elif before.channel:
-                if before.channel.id in rooms and after.channel.id not in rooms:
-                    room = before.channel
-                    if len(room.members) == 0:
-                        await room.delete(reason="Gaming room vide")
-                    elif member.id == rooms[room.id]["leader"]:
-                        new_leader = choice(room.members)
-                        rooms[room.id]["leader"] = new_leader.id
-                        log(new_leader, f'is the new leader of the room "{room.name}"')
-                        await room.send(f"L'ancien leader a quitté, le nouveau leader est {new_leader.mention}")
+        if before.channel:
+            if before.channel.id in rooms:
+                room = before.channel
+                if len(room.members) == 0:
+                    await room.delete(reason="Gaming room vide")
+                elif member.id == rooms[room.id]["leader"]:
+                    new_leader = choice(room.members)
+                    rooms[room.id]["leader"] = new_leader.id
+                    log(new_leader, f'is the new leader of the room "{room.name}"')
+                    await room.send(f"L'ancien leader a quitté, le nouveau leader est {new_leader.mention}")
 
 
     @Cog.listener()
@@ -77,7 +81,7 @@ class VoiceRoom(Cog):
         if before.id == self.bot.user.id:
             return
         
-        if self.is_room_leader(after):
+        if is_room_leader(after):
             room = after.voice.channel
             if rooms[room.id]["auto_name"] == True:
                 old_name = room.name
@@ -100,19 +104,14 @@ class VoiceRoom(Cog):
     async def rename_room(self, ctx: ApplicationContext, name: str):
         """Renommer la room"""
         
-        if not ctx.author.voice:
-            await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir en changer le nom !", ephemeral=True)
-            return
-        channel = ctx.author.voice.channel
-        if not channel.id in rooms:
-            await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir en changer le nom !", ephemeral=True)
-            return
-        if ctx.author.id != rooms[channel.id]["leader"]:
-            await ctx.respond("Vous devez être le leader de la room pour pouvoir changer le nom !", ephemeral=True)
-            return
+        if not is_room_leader(ctx.author):
+            return await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir y autoriser quelqu'un !", ephemeral=True)
         
-        await channel.edit(name=name, reason=f"{ctx.author} a modifié le nom de la room")
-        log(ctx.author, f'has renamed the room "{channel.name}" into "{name}"')
+        room = ctx.author.voice.channel
+        old_name = room.name
+        await room.edit(name=name, reason=f"{ctx.author} a modifié le nom de la room")
+        
+        log(ctx.author, f'has renamed the room "{old_name}" into "{name}"')
         await ctx.respond(f'Le nom de la room a été changé en "{name}"')
 
 
@@ -121,24 +120,18 @@ class VoiceRoom(Cog):
     async def room_auto_name(self, ctx: ApplicationContext, state):
         """Changer automatiquement le nom de la room selon l'activité du leader"""
         
-        if not ctx.author.voice:
-            await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir en changer le nom !", ephemeral=True)
-            return
-        channel = ctx.author.voice.channel
-        if not channel.id in rooms:
-            await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir en changer le nom !", ephemeral=True)
-            return
-        if ctx.author.id != rooms[channel.id]["leader"]:
-            await ctx.respond("Vous devez être le leader de la room pour pouvoir changer le nom !", ephemeral=True)
-            return
+        if not is_room_leader(ctx.author):
+            return await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir y autoriser quelqu'un !", ephemeral=True)
+        
+        room = ctx.author.voice.channel
 
         if state == "on":
-            rooms[channel.id]["auto_name"] = True
-            log(ctx.author, f'has turned auto-name on in the room "{channel.name}"')
+            rooms[room.id]["auto_name"] = True
+            log(ctx.author, f'has turned auto-name on in the room "{room.name}"')
             await ctx.respond("Le nom automatique de la room a été activé.")
         else:
-            rooms[channel.id]["auto_name"] = False
-            log(ctx.author, f'has turned auto-name off in the room "{channel.name}"')
+            rooms[room.id]["auto_name"] = False
+            log(ctx.author, f'has turned auto-name off in the room "{room.name}"')
             await ctx.respond("Le nom automatique de la room a été désactivé.")
 
 
@@ -146,24 +139,20 @@ class VoiceRoom(Cog):
     async def lock_room(self, ctx: ApplicationContext):
         """Verrouiller la room pour que seul les membres présents y aient accès"""
         
-        if not ctx.author.voice:
-            await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir la verrouiller !", ephemeral=True)
-            return
-        channel = ctx.author.voice.channel
-        if not channel.id in rooms:
-            await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir la verrouiller !", ephemeral=True)
-            return
-        if ctx.author.id != rooms[channel.id]["leader"]:
-            await ctx.respond("Vous devez être le leader de la room pour pouvoir la verrouiller !", ephemeral=True)
-            return
+        await ctx.defer()
         
-        for member in channel.members:
-            await channel.set_permissions(member, connect=True)
-        await channel.set_permissions(ctx.guild.default_role, connect=False)
+        if not is_room_leader(ctx.author):
+            return await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir y autoriser quelqu'un !", ephemeral=True)
         
-        rooms[channel.id]["locked"] = True
+        room = ctx.author.voice.channel
         
-        log(ctx.author, f'has locked the room "{channel.name}"')
+        for member in room.members:
+            await room.set_permissions(member, connect=True)
+        await room.set_permissions(ctx.guild.default_role, connect=False)
+        
+        rooms[room.id]["locked"] = True
+        
+        log(ctx.author, f'has locked the room "{room.name}"')
         await ctx.respond("La room a été verrouillée.")
 
 
@@ -171,25 +160,21 @@ class VoiceRoom(Cog):
     async def unlock_room(self, ctx: ApplicationContext):
         """Déverrouiller la room pour que tout le monde puisse y entrer"""
         
-        if not ctx.author.voice:
-            await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir la déverrouiller !", ephemeral=True)
-            return
-        channel = ctx.author.voice.channel
-        if not channel.id in rooms:
-            await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir la déverrouiller !", ephemeral=True)
-            return
-        if ctx.author.id != rooms[channel.id]["leader"]:
-            await ctx.respond("Vous devez être le leader de la room pour pouvoir la verrouiller !", ephemeral=True)
-            return
+        await ctx.defer()
         
-        for item in channel.overwrites:
+        if not is_room_leader(ctx.author):
+            return await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir y autoriser quelqu'un !", ephemeral=True)
+        
+        room = ctx.author.voice.channel
+        
+        for item in room.overwrites:
             if type(item) is Member:
-                await channel.set_permissions(item, overwrite=None, reason=f"La room a été verrouillée par {ctx.author}")
-        await channel.set_permissions(ctx.guild.default_role, overwrite=None, reason=f"La room a été verrouillée par {ctx.author}")
+                await room.set_permissions(item, overwrite=None, reason=f"La room a été verrouillée par {ctx.author}")
+        await room.set_permissions(ctx.guild.default_role, overwrite=None, reason=f"La room a été verrouillée par {ctx.author}")
         
-        rooms[channel.id]["locked"] = False
+        rooms[room.id]["locked"] = False
         
-        log(ctx.author, f'has unlocked the room "{channel.name}"')
+        log(ctx.author, f'has unlocked the room "{room.name}"')
         await ctx.respond("La room a été déverrouillée.")
     
     
@@ -197,16 +182,14 @@ class VoiceRoom(Cog):
     async def room_infos(self, ctx: ApplicationContext):
         """Obtenir des informations sur la room"""
         if not ctx.author.voice:
-            await ctx.respond("Vous devez être dans une room pour pouvoir en montrer les infos !", ephemeral=True)
-            return
-        channel = ctx.author.voice.channel
-        if not channel.id in rooms:
-            await ctx.respond("Vous devez être dans une room pour pouvoir en montrer les infos !", ephemeral=True)
-            return
-        
-        leader = ctx.guild.get_member(rooms[channel.id]["leader"])
+            return await ctx.respond("Vous devez être dans une room pour pouvoir en montrer les infos !", ephemeral=True)
+        if not ctx.author.voice.channel.id in rooms:
+            return await ctx.respond("Vous devez être dans une room pour pouvoir en montrer les infos !", ephemeral=True)
+
+        room = ctx.author.voice.channel
+        leader = ctx.guild.get_member(rooms[room.id]["leader"])
         states = {True: "oui", False: "non"}
-        await ctx.respond(f"Nom : {channel.name} \nLeader : {leader.mention} \nVerrouillée : {states[rooms[channel.id]['locked']]} \nNom automatique : {states[rooms[channel.id]['auto_name']]}")
+        await ctx.respond(f"Nom : {room.name} \nLeader : {leader.mention} \nVerrouillée : {states[rooms[room.id]['locked']]} \nNom automatique : {states[rooms[room.id]['auto_name']]}")
 
 
     @room_commands.command(name="blacklist")
@@ -214,23 +197,17 @@ class VoiceRoom(Cog):
     async def blacklist_from_room(self, ctx: ApplicationContext, member: Member):
         """Empêche à un membre de rejoindre la room"""
         
-        if not ctx.author.voice:
-            await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir en bannir quelqu'un !", ephemeral=True)
-            return
-        channel = ctx.author.voice.channel
-        if not channel.id in rooms:
-            await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir en bannir quelqu'un !", ephemeral=True)
-            return
-        if ctx.author.id != rooms[channel.id]["leader"]:
-            await ctx.respond("Vous devez être le leader de la room pour pouvoir en bannir quelqu'un !", ephemeral=True)
+        if not is_room_leader(ctx.author):
+            return await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir y autoriser quelqu'un !", ephemeral=True)
         
-        await channel.set_permissions(member, connect=False, reason="A été banni d'une room")
+        room = ctx.author.voice.channel
+        await room.set_permissions(member, connect=False, reason="A été banni d'une room")
         
         if member.voice:
-            if member.voice.channel.id == channel.id:
+            if member.voice.channel.id == room.id:
                 await member.move_to(None)
         
-        log(ctx.author, "has blacklisted", member, f'from the room "{channel.name}"')
+        log(ctx.author, "has blacklisted", member, f'in the room "{room.name}"')
         await ctx.respond(f"{member.mention} a été banni de la room.")
 
 
@@ -239,19 +216,14 @@ class VoiceRoom(Cog):
     async def whitelist_from_room(self, ctx: ApplicationContext, member: Member):
         """Autoriser un membre à rejoindre la room"""
         
-        if not ctx.author.voice:
+        if not is_room_leader(ctx.author):
             await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir y autoriser quelqu'un !", ephemeral=True)
             return
-        channel = ctx.author.voice.channel
-        if not channel.id in rooms:
-            await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir y autoriser quelqu'un !", ephemeral=True)
-            return
-        if ctx.author.id != rooms[channel.id]["leader"]:
-            await ctx.respond("Vous devez être le leader de la room pour pouvoir y autoriser quelqu'un !", ephemeral=True)
         
-        await channel.set_permissions(member, connect=True, reason="A été autorisé dans une room")
+        room = ctx.author.voice.channel
+        await room.set_permissions(member, connect=True, reason="A été autorisé dans une room")
 
-        log(ctx.author, "has whitelisted", member, f'from the room "{channel.name}"')
+        log(ctx.author, "has whitelisted", member, f'in the room "{room.name}"')
         await ctx.respond(f"{member.mention} a été autorisé dans la room.")
 
 
@@ -260,22 +232,21 @@ class VoiceRoom(Cog):
     async def set_room_leader(self, ctx: ApplicationContext, member: Member):
         """Passer le lead de la room à un membre"""
         
-        if not ctx.author.voice:
+        if not is_room_leader(ctx.author):
             await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir en passer le lead !", ephemeral=True)
             return
-        channel = ctx.author.voice.channel
-        if not channel.id in rooms:
-            await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir en passer le lead !", ephemeral=True)
-            return
-        if ctx.author.id != rooms[channel.id]["leader"]:
-            await ctx.respond("Vous devez être le leader de la room pour pouvoir en passer le lead !", ephemeral=True)
         
-        if rooms[channel.id]["locked"]:
-            await channel.set_permissions(member, overwrite=PermissionOverwrite(connect=True))
+        room = ctx.author.voice.channel
+        await room.set_permissions(member, overwrite=leader_overwrites)
+        
+        if rooms[room.id]["locked"]:
+            await room.set_permissions(ctx.author, overwrite=PermissionOverwrite(connect=True))
         else:
-            await channel.set_permissions(member, None)
+            await room.set_permissions(ctx.author, overwrite=None)
         
-        log(member, f'is the new leader of the room "{channel.name}"')
+        rooms[room.id]["leader"] = member.id
+        
+        log(member, f'is the new leader of the room "{room.name}"')
         await ctx.respond(f"{member.mention} est le nouveau leader de la room.")
 
 

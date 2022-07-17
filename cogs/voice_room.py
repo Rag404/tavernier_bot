@@ -261,6 +261,9 @@ class VoiceRoom(Cog):
         
         rooms[room.id]["leader"] = member.id
         
+        if rooms[room.id]["auto_name"] and (game := get_member_game_name(member)) and room.name != game:
+            await room.edit(name=game)
+        
         log(member, f'is the new leader of the room "{room.name}"')
         await ctx.respond(f"{member.mention} est le nouveau leader de la room.")
 

@@ -197,9 +197,7 @@ class VoiceRoom(Cog):
     @room_commands.command(name="infos")
     async def room_infos(self, ctx: ApplicationContext):
         """Obtenir des informations sur la room"""
-        if not ctx.author.voice:
-            return await ctx.respond("Vous devez être dans une room pour pouvoir en montrer les infos !", ephemeral=True)
-        if not ctx.author.voice.channel.id in rooms:
+        if not is_in_room(ctx.author):
             return await ctx.respond("Vous devez être dans une room pour pouvoir en montrer les infos !", ephemeral=True)
 
         room = ctx.author.voice.channel

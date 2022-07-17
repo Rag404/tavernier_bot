@@ -1,12 +1,12 @@
-from discord import Bot, Cog, Member, Game, ActivityType, SlashCommandGroup, VoiceChannel, VoiceState, PermissionOverwrite, ApplicationContext, user_command, option
+from discord import Bot, CategoryChannel, Cog, Member, Game, ActivityType, SlashCommandGroup, VoiceChannel, VoiceState, PermissionOverwrite, ApplicationContext, default_permissions, slash_command, user_command, option
 from discord.utils import get
 from random import choice
 from typing import Union
 from my_utils import log
 
 
-redirect_voice_channel = 996160558371979355
-rooms_category = 996159603324768276
+redirect_voice_channel = 996099476399870114
+rooms_category = 998274617275850754
 rooms = {}
 
 leader_overwrites = PermissionOverwrite(manage_channels=True, manage_permissions=True, move_members=True, mute_members=True, deafen_members=True, manage_events=True)
@@ -39,19 +39,19 @@ def get_member_game_name(member: Member) -> Union[Game, None]:
             return activity.name
 
 
+async def rename_room_to_game(self, room: VoiceChannel, member: Member) -> None:
+    if game := get_member_game_name(member):
+        if room.name != game:
+            await room.edit(name=game, reason="Le chef de la room a changé de jeu")
+        return
+
+
 class VoiceRoom(Cog):
     """Créer automatiquement des salons vocaux"""
     
     def __init__(self, bot):
         self.bot: Bot = bot
-
-
-    async def rename_room_to_game(self, room: VoiceChannel, member: Member) -> None:
-        if game := get_member_game_name(member):
-            if room.name != game:
-                await room.edit(name=game, reason="Le chef de la room a changé de jeu")
-            return
-
+    
 
     @Cog.listener()
     async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
@@ -80,7 +80,7 @@ class VoiceRoom(Cog):
             if before.channel.id in rooms:
                 room = before.channel
                 if len(room.members) == 0:
-                    await room.delete(reason="Gaming room vide")
+                    await room.delete(reason="Room vide")
                 elif member.id == rooms[room.id]["leader"]:
                     new_leader = choice(room.members)
                     rooms[room.id]["leader"] = new_leader.id
@@ -104,8 +104,11 @@ class VoiceRoom(Cog):
     @Cog.listener()
     async def on_guild_channel_delete(self, channel):
         if channel.id in rooms:
-            del rooms[channel.id]
-            log(f'The room "{channel.name}" has been deleted')
+            try:
+                del rooms[channel.id]
+                log(f'The room "{channel.name}" has been deleted')
+            finally:
+                pass
 
 
     room_commands = SlashCommandGroup("room", "Gérez votre room")
@@ -274,8 +277,42 @@ class VoiceRoom(Cog):
     @user_command(name="Room: Leader")
     async def leader_user_command(self, ctx, user):
         await self.set_room_leader(ctx, user)
+    
+    
+    @room_commands.command(name="handle")
+    @default_permissions(administrator=True)
+    async def handle_rooms(self, ctx: ApplicationContext):
+        """Handle rooms which were created before the bot restarts"""
+        
+        print("Handling already existing rooms...")
+        category: CategoryChannel = self.bot.get_channel(rooms_category)
+        
+        unknown_rooms = [channel for channel in category.channels if channel.id not in rooms]
+        
+        for channel in unknown_rooms:
+            if len(channel.members) == 0:
+                await channel.delete(reason="Room vide")
+                log(f'The room "{channel.name}" has been deleted')
+            
+            else:
+                leader = channel.members[0]
+                
+                for member in channel.members:
+                    if channel.overwrites_for(member) > channel.overwrites_for(leader):
+                        leader = member
+
+                rooms[channel.id] = {
+                    "leader": leader.id,
+                    "locked": not channel.overwrites_for(category.guild.default_role).connect,
+                    "auto-name": True
+                }
+        else:
+            print("No rooms to handle")
+                
+        print("Rooms handling done")
+        await ctx.respond("Rooms handling done", ephemeral=True)
 
 
-def setup(bot):
+def setup(bot: Bot):
     bot.add_cog(VoiceRoom(bot))
     print(" - VoiceRoom")

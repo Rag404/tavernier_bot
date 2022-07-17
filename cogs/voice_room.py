@@ -78,7 +78,7 @@ class VoiceRoom(Cog):
                 log(member, f'has created the room "{new_room.name}"')
 
         if before.channel:
-            if before.channel.id in rooms:
+            if before.channel.id in rooms and before.channel != after.channel:
                 room = before.channel
                 if len(room.members) == 0:
                     await room.delete(reason="Room vide")

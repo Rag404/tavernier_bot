@@ -12,12 +12,24 @@ rooms = {}
 leader_overwrites = PermissionOverwrite(manage_channels=True, manage_permissions=True, move_members=True, mute_members=True, deafen_members=True, manage_events=True)
 
 
-def is_room_leader(member: Member) -> bool:
+def is_in_room(member: Member) -> bool:
     if member.voice:
         if member.voice.channel.id in rooms:
-            room = member.voice.channel
-            if member.id == rooms[room.id]["leader"]:
-                return True
+            return True
+    return False
+
+
+def are_in_same_room(member_A: Member, member_B: Member):
+    if is_in_room(member_A) and is_in_room(member_B):
+        if member_A.voice.channel == member_B.voice.channel:
+            return True
+    return False
+
+
+def is_room_leader(member: Member) -> bool:
+    if is_in_room(member):
+        if member.id == rooms[member.voice.channel.id]["leader"]:
+            return True
     return False
 
 
@@ -233,8 +245,9 @@ class VoiceRoom(Cog):
         """Passer le lead de la room à un membre"""
         
         if not is_room_leader(ctx.author):
-            await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir en passer le lead !", ephemeral=True)
-            return
+            return await ctx.respond("Vous devez être dans une room et en être le leader pour pouvoir en passer le lead !", ephemeral=True)
+        if not are_in_same_room(ctx.author, member):
+            return await ctx.respond("Ce membre n'est pas dans votre room !")
         
         room = ctx.author.voice.channel
         await room.set_permissions(member, overwrite=leader_overwrites)

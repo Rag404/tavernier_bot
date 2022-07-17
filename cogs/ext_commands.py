@@ -14,7 +14,7 @@ class ExtCommands(Cog):
     @is_owner()
     async def load_ext(self, ctx: ApplicationContext, extension: str):
         try:
-            self.bot.load_extension(extension)
+            self.bot.load_extension("cogs." + extension)
         except Exception as e:
             await ctx.respond(f"Error :\n```\n{e}\n```", ephemeral=True)
         else:
@@ -25,7 +25,7 @@ class ExtCommands(Cog):
     @is_owner()
     async def load_ext(self, ctx: ApplicationContext, extension: str):
         try:
-            self.bot.unload_extension(extension)
+            self.bot.unload_extension("cogs." + extension)
         except Exception as e:
             await ctx.respond(f"Error :\n```\n{e}\n```", ephemeral=True)
         else:
@@ -36,19 +36,11 @@ class ExtCommands(Cog):
     @is_owner()
     async def load_ext(self, ctx: ApplicationContext, extension: str):
         try:
-            self.bot.reload_extension(extension)
+            self.bot.reload_extension("cogs." + extension)
         except Exception as e:
             await ctx.respond(f"Error :\n```\n{e}\n```", ephemeral=True)
         else:
             await ctx.respond(f"`{extension}` has been reloaded", ephemeral=True)
-    
-    
-    @Cog.listener()
-    async def on_command_error(ctx: ApplicationContext, error):
-        if isinstance(error, NotOwner):
-            await ctx.respond("Vous n'êtes pas le propriétaire du bot !", ephemeral=True)
-        else:
-            raise error
 
 
 def setup(bot):

@@ -271,7 +271,7 @@ class VoiceRoom(Cog):
             await ctx.respond("Vous devez être le leader de la room pour pouvoir en passer le lead !", ephemeral=True)
         
         if rooms[channel.id]["locked"]:
-            await channel.set_permissions(member, PermissionOverwrite(connect=True))
+            await channel.set_permissions(member, overwrite=PermissionOverwrite(connect=True))
         else:
             await channel.set_permissions(member, None)
         

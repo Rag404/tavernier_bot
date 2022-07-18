@@ -1,21 +1,24 @@
+import json
 from discord import Bot, CategoryChannel, Cog, Member, Game, ActivityType, Permissions, SlashCommandGroup, VoiceChannel, VoiceState, PermissionOverwrite, ApplicationContext, default_permissions, slash_command, user_command, option
+from data.config import REDIRECT_VOICE_CHANNEL, ROOMS_CATEGORY, ROOMS_SAVE_PATH, ROOM_LEADER_OVERWRITES
 from discord.utils import get
 from random import choice
 from typing import Union
 from my_utils import log
 
 
-redirect_voice_channel = 996160558371979355
-rooms_category = 996159603324768276
 rooms = {}
-
-leader_overwrites = PermissionOverwrite(manage_channels=True, manage_permissions=True, move_members=True, mute_members=True, deafen_members=True, manage_events=True)
-
 
 def is_in_room(member: Member) -> bool:
     if member.voice:
         if member.voice.channel.id in rooms:
             return True
+    return False
+
+
+def is_cmd_in_room(ctx: ApplicationContext) -> bool:
+    if ctx.channel_id in rooms:
+        return True
     return False
 
 
@@ -51,20 +54,20 @@ class VoiceRoom(Cog):
     
     def __init__(self, bot):
         self.bot: Bot = bot
-        #self.bot.loop.create_task(self.handle_rooms(ctx=None))
+        self.bot.loop.create_task(self.handle_rooms(ctx=None))
     
 
     @Cog.listener()
     async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
         if after.channel:
-            if after.channel.id == redirect_voice_channel:
+            if after.channel.id == REDIRECT_VOICE_CHANNEL:
                 muted_role = get(member.guild.roles, name="Muted")
                 overwrites = {
-                    member: leader_overwrites,
+                    member: ROOM_LEADER_OVERWRITES,
                     muted_role: PermissionOverwrite(speak=False)
                 }
                 
-                category = member.guild.get_channel(rooms_category)
+                category = member.guild.get_channel(ROOMS_CATEGORY)
                 room_name = get_member_game_name(member) or member.display_name
                 new_room = await member.guild.create_voice_channel(name=room_name, category=category, overwrites=overwrites, reason=f"A créé une room")
                 
@@ -197,7 +200,8 @@ class VoiceRoom(Cog):
     @room_commands.command(name="infos")
     async def room_infos(self, ctx: ApplicationContext):
         """Obtenir des informations sur la room"""
-        if not is_in_room(ctx.author):
+        
+        if not is_in_room(ctx.author) and not is_cmd_in_room(ctx):
             return await ctx.respond("Vous devez être dans une room pour pouvoir en montrer les infos !", ephemeral=True)
 
         room = ctx.author.voice.channel
@@ -252,7 +256,7 @@ class VoiceRoom(Cog):
             return await ctx.respond("Ce membre n'est pas dans votre room !")
         
         room = ctx.author.voice.channel
-        await room.set_permissions(member, overwrite=leader_overwrites)
+        await room.set_permissions(member, overwrite=ROOM_LEADER_OVERWRITES)
         
         if rooms[room.id]["locked"]:
             await room.set_permissions(ctx.author, overwrite=PermissionOverwrite(connect=True))
@@ -289,7 +293,11 @@ class VoiceRoom(Cog):
         await self.bot.wait_until_ready()
         
         print("Handling already existing rooms...")
-        category: CategoryChannel = self.bot.get_channel(rooms_category)
+        category: CategoryChannel = self.bot.get_channel(ROOMS_CATEGORY)
+        
+        save = {}
+        with open(ROOMS_SAVE_PATH, encoding='utf-8') as file:
+            save = json.load(file)
         
         unknown_rooms = [channel for channel in category.channels if channel.id not in rooms]
         
@@ -297,6 +305,9 @@ class VoiceRoom(Cog):
             if len(channel.members) == 0:
                 await channel.delete(reason="Room vide")
                 log(f'The room "{channel.name}" has been deleted')
+            
+            elif channel.id in save:
+                rooms[channel.id] = save[channel.id]
             
             else:
                 rooms[channel.id] = {
@@ -306,6 +317,7 @@ class VoiceRoom(Cog):
                 }
                 
         print("Rooms handling done")
+        
         if ctx is not None:
             await ctx.respond("Rooms handling done", ephemeral=True)
 
@@ -313,3 +325,8 @@ class VoiceRoom(Cog):
 def setup(bot: Bot):
     bot.add_cog(VoiceRoom(bot))
     print(" - VoiceRoom")
+
+
+def teardown(bot):
+    with open(ROOMS_SAVE_PATH, 'w') as file:
+        json.dump(rooms, file)

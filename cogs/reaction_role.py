@@ -1,11 +1,12 @@
 from discord import ApplicationContext, Bot, Cog, Guild, Embed, Message, RawReactionActionEvent, TextChannel, slash_command 
+from data.config import REACTION_ROLES_PATH
 from typing import Union
 from my_utils import log
 import json
 
 
 global reaction_roles
-with open('reaction_roles.json', encoding="utf-8") as file:
+with open(REACTION_ROLES_PATH, encoding="utf-8") as file:
     reaction_roles = json.load(file)
 
 

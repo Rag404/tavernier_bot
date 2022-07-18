@@ -1,10 +1,9 @@
-import asyncio
+from discord import Bot, Cog, Guild, Activity
+from data.config import TAVERN_ID
 from random import choice
 from discord.ext import tasks
-from discord import Bot, Cog, Guild, Activity
+import asyncio
 
-
-taverne_id = 807743905121566720
 
 playing = 0
 streaming = 1
@@ -12,7 +11,7 @@ listening = 2
 watching = 3
 competing = 5
 
-all_status = None
+all_status = []
 
 
 class BotStatus(Cog):
@@ -41,7 +40,7 @@ class BotStatus(Cog):
     def statusList(self):
         global all_status
 
-        guild: Guild = self.bot.get_guild(taverne_id)
+        guild: Guild = self.bot.get_guild(TAVERN_ID)
         members = [member for member in guild.members if not member.bot]
         random_member = choice(members)
 

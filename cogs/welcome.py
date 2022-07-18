@@ -1,8 +1,5 @@
 from discord import Bot, Cog, Member, Embed, Guild, Color
-
-guild_id = 807743905121566720
-welcome_channel_id = 807900462794932236
-roles_channel_id = 915562589193392138
+from data.config import TAVERN_ID, WELCOME_CHANNEL
 
 
 class Welcome(Cog):
@@ -14,8 +11,8 @@ class Welcome(Cog):
 
     @Cog.listener()
     async def on_member_join(self, member: Member):
-        guild: Guild = self.bot.get_guild(guild_id)
-        channel = guild.get_channel(welcome_channel_id)
+        guild: Guild = self.bot.get_guild(TAVERN_ID)
+        channel = guild.get_channel(WELCOME_CHANNEL)
 
         if member.guild != guild:
             return

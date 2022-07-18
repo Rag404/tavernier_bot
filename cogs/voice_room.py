@@ -329,4 +329,4 @@ def setup(bot: Bot):
 
 def teardown(bot):
     with open(ROOMS_SAVE_PATH, 'w') as file:
-        json.dump(rooms, file)
+        json.dump(rooms, file, indent=4)

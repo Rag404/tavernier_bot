@@ -37,7 +37,7 @@ class ErrorHandling(Cog):
                 color=Color.orange(),
                 timestamp=datetime.now()
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await ctx.send(embed=embed)
             
             _traceback = io.StringIO(''.join(traceback.format_exception(type(error), error, error.__traceback__)))
             await self.bot.get_user(OWNER_ID).send(embed=embed, file=File(_traceback, filename="traceback.txt"))

@@ -36,7 +36,7 @@ def is_room_leader(member: Member) -> bool:
     return False
 
 
-def get_member_game_name(member: Member) -> Union[Game, None]:
+def get_member_game_name(member: Member) -> Union[str, None]:
     for activity in member.activities:
         if activity.type == ActivityType.playing:
             return activity.name

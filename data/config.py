@@ -4,6 +4,19 @@ import discord
 TAVERN_ID = 807743905121566720
 OWNER_ID = 576435921390403623
 
+# Extensions to load when starting
+BOT_EXTENSIONS = [
+    "ext_commands",
+    "moderation",
+    "infochannels",
+    "welcome",
+    "status",
+    "reaction_role",
+    "utilities",
+    "voice_room",
+    "error_handling"
+]
+
 # Error handling
 TRACEBACK_FILE_PATH = './data/last_traceback.txt'
 
@@ -12,7 +25,7 @@ MEMBERS_INFOCHANNEL = 925362480430059541
 ONLINES_INFOCHANNEL = 963536054621716520
 
 # Reaction-roles
-REACTION_ROLES_PATH = './data/reaction_roles.json'
+REACTION_ROLES_PATH = './data/reaction_roles_test.json'
 
 # Voice rooms
 REDIRECT_VOICE_CHANNEL = 996160558371979355

@@ -3,27 +3,15 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from os import getenv
 from datetime import datetime
+from data.config import BOT_EXTENSIONS, BOT_GUILDS
 
 
-guilds = [807743905121566720, 731083709658169344]
 intents = discord.Intents.all()
-client = commands.Bot(intents=intents, debug_guilds=guilds)
+client = commands.Bot(intents=intents, debug_guilds=BOT_GUILDS)
 
-
-extensions = [
-    "ext_commands",
-    "moderation",
-    "infochannels",
-    "welcome",
-    "status",
-    "reaction_role",
-    "utilities",
-    "voice_room",
-    "error_handling"
-]
 
 print("Loading cogs...")
-for extension in extensions:  # Load the extensions
+for extension in BOT_EXTENSIONS:  # Load the extensions
     client.load_extension(f"cogs.{extension}")
 print("- - -")
 

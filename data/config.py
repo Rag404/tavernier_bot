@@ -4,7 +4,8 @@ import discord
 TAVERN_ID = 807743905121566720
 OWNER_ID = 576435921390403623
 
-# Extensions to load when starting
+# Main
+BOT_GUILDS = [807743905121566720, 731083709658169344]
 BOT_EXTENSIONS = [
     "ext_commands",
     "moderation",

@@ -1,6 +1,6 @@
 import discord
 
-# Dirty way to get the root directory (removes '\data\config.py')
+# Dirty way to get the root directory (removes '\data\config.py' at the end of the str)
 root_path = __file__[:-15]
 
 

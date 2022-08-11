@@ -141,7 +141,7 @@ class ReactionRole(Cog):
         await msg.edit(embed=embed)
 
         # Add all the reactions to the rr message
-        await self.add_reactions(reaction_roles[rr_data], msg)
+        await self.add_reactions(rr_data, msg)
 
         # Log and respond to the command
         log("Reaction-roles have been updated by", ctx.author)
@@ -194,11 +194,6 @@ class ReactionRole(Cog):
     async def new_role_in_rr(self, ctx: ApplicationContext, rr: str, role: Role, emoji: Emoji, description: str):
         """Ajoute un rôle à un réaction-rôle"""
         
-        '''
-        global reaction_roles
-        if name in reaction_roles[rr]["reactions"]:
-            return await ctx.respond(f"❌ Le nom *{role.name}* existe déja dans le réaction-rôle *{rr}*, vous ne pouvez pas ajouter le même !")
-        '''
         new_reaction = {
             "role": role.id,
             "emoji": emoji.id

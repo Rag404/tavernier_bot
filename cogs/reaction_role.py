@@ -194,6 +194,12 @@ class ReactionRole(Cog):
     async def new_role_in_rr(self, ctx: ApplicationContext, rr: str, role: Role, emoji: Emoji, description: str):
         """Ajoute un rôle à un réaction-rôle"""
         
+        # For the Emoji type to work as an option type, a little change has been made to the library
+        # Line 851 in ./bot-env/Lib/site-packages/discord/commands/core.py
+        # arg = await converter().convert(ctx, arg)
+        # Instead of
+        # arg = await converter.convert(ctx, arg)
+        
         new_reaction = {
             "role": role.id,
             "emoji": emoji.id

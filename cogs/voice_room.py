@@ -205,9 +205,13 @@ class VoiceRoom(Cog):
             return await ctx.respond("Vous devez être dans une room pour pouvoir en montrer les infos !", ephemeral=True)
 
         room = ctx.author.voice.channel
-        leader = ctx.guild.get_member(rooms[room.id]["leader"])
+        room_data: dict = rooms[room.id]
+        
+        leader = ctx.guild.get_member(room_data["leader"])
         states = {True: "oui", False: "non"}
-        await ctx.respond(f"Nom : {room.name} \nLeader : {leader.mention} \nVerrouillée : {states[rooms[room.id]['locked']]} \nNom automatique : {states[rooms[room.id]['auto_name']]}")
+        locked, auto_name = room_data["locked"], room_data["auto_name"]
+        
+        await ctx.respond(f"Nom : {room.name} \nLeader : {leader.mention} \nVerrouillée : {states[locked]} \nNom automatique : {states[auto_name]}")
 
 
     @room_commands.command(name="blacklist")
@@ -313,7 +317,7 @@ class VoiceRoom(Cog):
                 rooms[channel.id] = {
                     "leader": channel.members[0].id,
                     "locked": not channel.overwrites_for(category.guild.default_role).connect,
-                    "auto-name": True
+                    "auto_name": True
                 }
                 
         print("Rooms handling done")

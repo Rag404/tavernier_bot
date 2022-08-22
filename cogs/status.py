@@ -1,5 +1,5 @@
 from discord import Bot, Cog, Guild, Activity
-from data.config import TAVERN_ID
+from data.config import TAVERN_ID, ANIMES_PATH
 from random import choice
 from discord.ext import tasks
 import asyncio
@@ -12,6 +12,7 @@ watching = 3
 competing = 5
 
 all_status = []
+animes = open(ANIMES_PATH).readlines()
 
 
 class BotStatus(Cog):
@@ -43,6 +44,7 @@ class BotStatus(Cog):
         guild: Guild = self.bot.get_guild(TAVERN_ID)
         members = [member for member in guild.members if not member.bot]
         random_member = choice(members)
+        random_anime = choice(animes)
 
         # list of all looping status
         all_status = [
@@ -50,7 +52,7 @@ class BotStatus(Cog):
             [playing, "la belotte"],
             [watching, random_member.name],
             [listening, "du phonk"],
-            [watching, "l'Attaque des Titans"],
+            [watching, random_anime],
             [playing, "faire du bouzkachi"]
         ]
 

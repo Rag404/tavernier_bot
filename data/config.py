@@ -32,6 +32,9 @@ ONLINES_INFOCHANNEL = 963536054621716520
 # Reaction-roles
 REACTION_ROLES_PATH = root_path + '/data/reaction_roles.json'
 
+# Status
+ANIMES_PATH = root_path + '/data/animes_list.txt'
+
 # Voice rooms
 REDIRECT_VOICE_CHANNEL = 996160558371979355
 ROOMS_CATEGORY = 996159603324768276

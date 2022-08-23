@@ -55,7 +55,7 @@ class BotStatus(Cog):
         all_status = [
             [watching, f"{len(members)} membres"],
             [playing, choice(video_games)],
-            [watching, choice(members)],
+            [watching, choice(members).display_name],
             [watching, choice(animes)],
             [listening, choice(music_genres)],
             [watching, choice(movies)]

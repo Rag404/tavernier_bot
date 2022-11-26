@@ -1,13 +1,13 @@
 Age of Empires
 Angry Birds
 Animal Crossing
-Apx Legends
+Apex Legends
 Assassin's Creed
 Asteroids
 Bayonetta
 BioShock
 Bloodborne
-Borderland
+Borderlands
 Call of Duty
 Castlevania
 Centipede
@@ -28,7 +28,7 @@ Elden Ring
 EverQuest
 Fallout
 Far Cry
-FIFA
+FIFA 23
 Final Fantasy
 Frogger
 Galaga
@@ -58,7 +58,7 @@ Monster Hunter
 Mortal Kombat
 NBA Jam
 Nintendogs
-Overwatch
+Overwatch 2
 Pac-Man
 Persona
 Plants vs Zombies
@@ -79,10 +79,11 @@ Splinter Cell
 Star Fox
 StarCraft
 Stardew Valley
+Stray
 Street Fighter
 Super Mario
 Super Smash Bros
-Team Fortress
+Team Fortress 2
 Tekken
 Terraria
 Tetris

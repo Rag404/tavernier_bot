@@ -28,7 +28,7 @@ la Ruée vers l'Or
 la Septième Compagnie
 la Soupe aux Choux
 la Tour Montparnasse
-Labyrinthe
+le Labyrinthe
 le Loup de Wall Street
 le Magicien d'Oz
 le Roi Lion
@@ -65,5 +65,5 @@ The Mask
 Titanic
 Top Gun
 Toy Story
-Wally
+Wall-E
 X-Men

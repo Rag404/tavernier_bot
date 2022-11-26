@@ -1,18 +1,18 @@
 Age of Empires
 Angry Birds
 Animal Crossing
-Apx Legends
+Apex Legends
 Assassin's Creed
 Asteroids
 Bayonetta
 BioShock
 Bloodborne
-Borderland
+Borderlands
 Call of Duty
 Castlevania
 Centipede
 Civilization
-Counter-Strike
+Counter-Strike: Global Offensive
 Crash Bandicoot
 Dark Souls
 Destiny
@@ -28,7 +28,7 @@ Elden Ring
 EverQuest
 Fallout
 Far Cry
-FIFA
+FIFA 23
 Final Fantasy
 Frogger
 Galaga
@@ -82,7 +82,7 @@ Stardew Valley
 Street Fighter
 Super Mario
 Super Smash Bros
-Team Fortress
+Team Fortress 2
 Tekken
 Terraria
 Tetris

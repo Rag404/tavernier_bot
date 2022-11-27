@@ -1,5 +1,5 @@
 import json
-from discord import Bot, CategoryChannel, Cog, Member, Game, ActivityType, Permissions, SlashCommandGroup, VoiceChannel, VoiceState, PermissionOverwrite, ApplicationContext, default_permissions, slash_command, user_command, option
+from discord import Bot, CategoryChannel, Cog, Member, ActivityType, SlashCommandGroup, VoiceChannel, VoiceState, PermissionOverwrite, ApplicationContext, AllowedMentions, default_permissions, user_command, option
 from data.config import REDIRECT_VOICE_CHANNEL, ROOMS_CATEGORY, ROOMS_SAVE_PATH, ROOM_LEADER_OVERWRITES
 from discord.utils import get
 from random import choice
@@ -42,11 +42,10 @@ def get_member_game_name(member: Member) -> Union[str, None]:
             return activity.name
 
 
-async def rename_room_to_game(room: VoiceChannel, member: Member) -> None:
-    if game := get_member_game_name(member):
-        if room.name != game:
-            await room.edit(name=game, reason="Le chef de la room a changé de jeu")
-        return
+async def rename_room_to_game(room: VoiceChannel, member: Member) -> str:
+    if game := get_member_game_name(member) and room.name != game:
+        await room.edit(name=game, reason="Le chef de la room a changé de jeu")
+    return game
 
 
 class VoiceRoom(Cog):
@@ -56,61 +55,81 @@ class VoiceRoom(Cog):
         self.bot: Bot = bot
         self.bot.loop.create_task(self.handle_rooms(ctx=None))
     
+    
+    async def create_room(self, leader: Member) -> VoiceChannel:
+        muted_role = get(leader.guild.roles, name="Muted")
+        overwrites = {
+            leader: ROOM_LEADER_OVERWRITES,
+            muted_role: PermissionOverwrite(speak=False)
+        }
+        
+        category = leader.guild.get_channel(ROOMS_CATEGORY)
+        room_name = get_member_game_name(leader) or leader.display_name
+        new_room = await leader.guild.create_voice_channel(name=room_name, category=category, overwrites=overwrites, reason=f"A créé une room")
+        
+        global rooms
+        rooms[new_room.id] = {
+            "leader": leader.id,
+            "locked": False,
+            "auto_name": True
+        }
+        
+        await leader.move_to(new_room, reason="Téléporté dans une nouvelle room")
+        await new_room.send(f"Le chef de la room est {leader.mention}", allowed_mentions=AllowedMentions.none())
+        log(leader, f'has created the room "{new_room.name}"')
+        
+        new_room.members
+        
+        return new_room
+    
+    
+    async def change_owner(self, room: VoiceChannel) -> Member:
+        global rooms
+        new_leader = room.members[0]
+        rooms[room.id]["leader"] = new_leader.id
+        
+        await room.send(f"L'ancien leader a quitté, le nouveau leader est {new_leader.mention}")
+        log(new_leader, f'is the new leader of the room "{room.name}"')
+        return new_leader
+    
 
     @Cog.listener()
     async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
-        if after.channel:
-            if after.channel.id == REDIRECT_VOICE_CHANNEL:
-                muted_role = get(member.guild.roles, name="Muted")
-                overwrites = {
-                    member: ROOM_LEADER_OVERWRITES,
-                    muted_role: PermissionOverwrite(speak=False)
-                }
-                
-                category = member.guild.get_channel(ROOMS_CATEGORY)
-                room_name = get_member_game_name(member) or member.display_name
-                new_room = await member.guild.create_voice_channel(name=room_name, category=category, overwrites=overwrites, reason=f"A créé une room")
-                
-                rooms[new_room.id] = {
-                    "leader": member.id,
-                    "locked": False,
-                    "auto_name": True
-                }
-                
-                await member.move_to(new_room, reason="Téléporté dans une nouvelle room")
-                log(member, f'has created the room "{new_room.name}"')
-
-        if before.channel:
-            if before.channel.id in rooms and before.channel != after.channel:
-                room = before.channel
-                if len(room.members) == 0:
-                    await room.delete(reason="Room vide")
-                elif member.id == rooms[room.id]["leader"]:
-                    new_leader = choice(room.members)
-                    rooms[room.id]["leader"] = new_leader.id
-                    log(new_leader, f'is the new leader of the room "{room.name}"')
-                    await room.send(f"L'ancien leader a quitté, le nouveau leader est {new_leader.mention}")
+        if after.channel is not None and after.channel.id == REDIRECT_VOICE_CHANNEL:
+            # If the event is called by a member entering the redirect voice channel
+            await self.create_room(member)
+        
+        if (room := before.channel) is not None and room.id in rooms and room != after.channel:
+            # If the event was called by a member leaving a room
+            if len(room.members) == 0:
+                # If the room is now empty
+                await room.delete(reason="Room vide")
+                log(f'The room "{room.name}" has been deserted')
+            
+            elif member.id == rooms[room.id]["leader"]:
+                # If the member was the leader of its room
+                await self.change_owner(room)
+                await rename_room_to_game(room, member)
 
 
     @Cog.listener()
     async def on_presence_update(self, before: Member, after: Member):
         if before.id == self.bot.user.id:
+            # If the event was called by the bot itself
             return
         
-        if is_room_leader(after):
-            room = after.voice.channel
-            if rooms[room.id]["auto_name"] == True:
-                old_name = room.name
-                await rename_room_to_game(room, after)
-                log(f'The room "{old_name}" has been auto-renamed to "{room.name}"')
+        if is_room_leader(after) and rooms[(room := after.voice.channel).id]["auto_name"] == True:
+            # If the member who called this event is a room leader and if its room has auto-naming enabled
+            old, new = room.name, await rename_room_to_game(room, after)
+            log(f'The room "{old}" has been auto-renamed to "{new}"')
 
 
     @Cog.listener()
-    async def on_guild_channel_delete(self, channel):
+    async def on_guild_channel_delete(self, channel: VoiceChannel):
         if channel.id in rooms:
             try:
                 del rooms[channel.id]
-                log(f'The room "{channel.name}" has been deleted')
+                log(f'The room "{channel.name}" has been manually deleted')
             finally:
                 pass
 
@@ -129,6 +148,7 @@ class VoiceRoom(Cog):
         room = ctx.author.voice.channel
         old_name = room.name
         await room.edit(name=name, reason=f"{ctx.author} a modifié le nom de la room")
+        rooms[room.id]["auto_name"] = False
         
         log(ctx.author, f'has renamed the room "{old_name}" into "{name}"')
         await ctx.respond(f'Le nom de la room a été changé en "{name}"')

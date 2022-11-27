@@ -33,7 +33,7 @@ class BotStatus(Cog):
 
     @tasks.loop()
     async def status_loop(self):
-        self.statusList()
+        self.status_list()
         for activity in all_status:
             newActivity = Activity(type=activity[0], name=activity[1])
             await self.bot.change_presence(activity=newActivity)
@@ -45,7 +45,7 @@ class BotStatus(Cog):
         status_loop.start(self)
 
 
-    def statusList(self):
+    def status_list(self):
         global all_status
 
         guild: Guild = self.bot.get_guild(TAVERN_ID)

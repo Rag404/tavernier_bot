@@ -42,8 +42,9 @@ def get_member_game_name(member: Member) -> Union[str, None]:
             return activity.name
 
 
-async def rename_room_to_game(room: VoiceChannel, member: Member) -> str:
-    if game := get_member_game_name(member) and room.name != game:
+async def rename_room_to_game(room: VoiceChannel, member: Member) -> Union[str, None]:
+    game = get_member_game_name(member)
+    if game and room.name != game:
         await room.edit(name=game, reason="Le chef de la room a changé de jeu")
     return game
 

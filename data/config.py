@@ -47,7 +47,7 @@ ROOMS_SAVE_PATH        = root_path + '/data/rooms_save.json'
 ROOM_LEADER_OVERWRITES = discord.PermissionOverwrite(manage_channels=True, manage_permissions=True, move_members=True, mute_members=True, deafen_members=True, manage_events=True)
 
 # Welcome
-WELCOME_CHANNEL = 807900462794932236WELCOME_CHANNEL = 807900462794932236
+WELCOME_CHANNEL = 807900462794932236
 
 # Hyperactive role
 HYPERACTIVE_ROLE   = 939867561284227102

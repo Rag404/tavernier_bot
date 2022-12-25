@@ -1,4 +1,5 @@
 import discord
+import datetime as dt
 
 # Dirty way to get the root directory (removes '\data\config.py' at the end of the str)
 root_path = __file__[:-15]
@@ -19,7 +20,8 @@ BOT_EXTENSIONS = [
     "reaction_role",
     "utilities",
     "voice_room",
-    "error_handling"
+    "error_handling",
+    "hyperactive"
 ]
 
 # Error handling
@@ -33,16 +35,24 @@ ONLINES_INFOCHANNEL = 963536054621716520
 REACTION_ROLES_PATH = root_path + '/data/reaction_roles.json'
 
 # Status
-ANIMES_PATH = root_path + '/data/status/animes.txt'
+ANIMES_PATH       = root_path + '/data/status/animes.txt'
 MUSIC_GENRES_PATH = root_path + '/data/status/music_genres.txt'
-VIDEO_GAMES_PATH = root_path + '/data/status/video_games.txt'
-MOVIES_PATH = root_path + '/data/status/movies.txt'
+VIDEO_GAMES_PATH  = root_path + '/data/status/video_games.txt'
+MOVIES_PATH       = root_path + '/data/status/movies.txt'
 
 # Voice rooms
 REDIRECT_VOICE_CHANNEL = 996160558371979355
-ROOMS_CATEGORY = 996159603324768276
-ROOMS_SAVE_PATH = root_path + '/data/rooms_save.json'
+ROOMS_CATEGORY         = 996159603324768276
+ROOMS_SAVE_PATH        = root_path + '/data/rooms_save.json'
 ROOM_LEADER_OVERWRITES = discord.PermissionOverwrite(manage_channels=True, manage_permissions=True, move_members=True, mute_members=True, deafen_members=True, manage_events=True)
 
 # Welcome
-WELCOME_CHANNEL = 807900462794932236
+WELCOME_CHANNEL = 807900462794932236WELCOME_CHANNEL = 807900462794932236
+
+# Hyperactive role
+HYPERACTIVE_ROLE   = 939867561284227102
+STREAK_SAVE_FILE   = root_path + '/data/hyperactive_progress.json'
+STREAK_DATA        = {"streak": 0, "time": 0, "last": 0}
+STREAK_WEEK_DAY    = 0  # 0 Monday, 1 Tuesday, etc...
+STREAK_HYPERACTIVE = 2  # Streak required to get the hyperactive role
+STREAK_TIME_MIN    = dt.timedelta(hours=1)

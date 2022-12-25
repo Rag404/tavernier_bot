@@ -102,10 +102,12 @@ class VoiceRoom(Cog):
         
         if (room := before.channel) is not None and room.id in rooms and room != after.channel:
             # If the event was called by a member leaving a room
-            if len(room.members) == 0:
-                # If the room is now empty
+            if len([member for member in room.members if not member.bot]) == 0:
+                # If the room is now empty (ignore bots)
+                del rooms[room.id]
                 await room.delete(reason="Room vide")
                 log(f'The room "{room.name}" has been deserted')
+
             
             elif member.id == rooms[room.id]["leader"]:
                 # If the member was the leader of its room
@@ -122,21 +124,24 @@ class VoiceRoom(Cog):
         if is_room_leader(after) and rooms[(room := after.voice.channel).id]["auto_name"] == True:
             # If the member who called this event is a room leader and if its room has auto-naming enabled
             old, new = room.name, await rename_room_to_game(room, after)
-            log(f'The room "{old}" has been auto-renamed to "{new}"')
+            if new:
+                log(f'The room "{old}" has been auto-renamed to "{new}"')
 
 
     @Cog.listener()
     async def on_guild_channel_delete(self, channel: VoiceChannel):
-        if channel.id in rooms:
-            try:
-                del rooms[channel.id]
-                log(f'The room "{channel.name}" has been manually deleted')
-            finally:
-                pass
+        if channel.id not in rooms:
+            return
+        
+        try:
+            del rooms[channel.id]
+            log(f'The room "{channel.name}" has been manually deleted')
+        finally:
+            pass
 
 
     room_commands = SlashCommandGroup("room", "Gérez votre room")
-
+    
 
     @room_commands.command(name="rename")
     @option("name", description="Le nouveau nom de la room")
@@ -354,4 +359,4 @@ def setup(bot: Bot):
 
 def teardown(bot):
     with open(ROOMS_SAVE_PATH, 'w') as file:
-        json.dump(rooms, file, indent=4)
+        json.dump(rooms, file, indent=2)

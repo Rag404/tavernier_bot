@@ -1,7 +1,7 @@
 from discord import Bot, Cog, Guild, Member, Status, VoiceChannel, VoiceState
 from data.config import TAVERN_ID, MEMBERS_INFOCHANNEL, ONLINES_INFOCHANNEL
 from discord.ext import tasks
-from my_utils import log
+from resources.utils import log
 
 member_count = 0
 

@@ -1,46 +1,47 @@
 from discord import Cog, Bot, Member, VoiceState
-from data.config import STREAK_SAVE_FILE, STREAK_DATA, STREAK_WEEK_DAY, STREAK_HYPERACTIVE, HYPERACTIVE_ROLE, STREAK_TIME_MIN, REDIRECT_VOICE_CHANNEL
-from my_utils import log
+from data.config import STREAK_DATA, STREAK_WEEK_DAY, STREAK_HYPERACTIVE, HYPERACTIVE_ROLE, STREAK_TIME_MIN, REDIRECT_VOICE_CHANNEL, STREAK_DB_COLLECTION
+from resources.database import database
+from resources.utils import log
 from typing import Union
 import datetime as dt
-import json
+
+col = database.get_collection(STREAK_DB_COLLECTION)
 
 
-def read_data(member: Member = None, *, field: str = None) -> Union[dict, int, float]:
+def read_data(member: Member = None, *, field: str = None) -> Union[dict, int, float, list]:
     """Get either the entire data, a member's data, or only a field"""
-
-    with open(STREAK_SAVE_FILE, 'r') as file:
-        data: dict = json.load(file)
-    
-    value = data.copy()
     
     if member:
-        value = data.get(str(member.id), None)
+        value = col.find_one({"_id": member.id})
         
         if value is None: # Handling member not already known
-            update_data(member, STREAK_DATA)
-            value = STREAK_DATA
+            value = {"_id": member.id} | STREAK_DATA
+            col.insert_one(value)
         
         if field:
-            value = value.get(field, None)
+            value = value[field]
+        
+        return value
     
-    return value
+    else:
+        return list(col.find({}))
 
 
 def update_data(member: Member, member_data, *, field: str = None):
     """Update either the data, or only a field, of a member"""
-
-    data = read_data()
     
     if field:
-        assert type(member_data) in (int, float)
-        data[str(member.id)][field] = member_data
+        assert type(member_data) in (int, float) and member_data >= 0
+        result = col.update_one({"_id": member.id}, {"$set": {field: member_data}})
     else:
-        assert type(member_data) is dict
-        data[str(member.id)] = member_data
+        assert type(member_data) is dict and member_data.keys() == STREAK_DATA.keys()
+        result = col.update_one({"_id": member.id}, {"$set": member_data})
     
-    with open(STREAK_SAVE_FILE, 'w') as file:
-        json.dump(data, file)
+    if result.modified_count == 0:
+        if field:
+            col.insert_one(STREAK_DATA | {"_id": member.id, field: member_data})
+        else:
+            col.insert_one(STREAK_DATA | {"_id": member.id} | member_data)
 
 
 async def reset_progress(member: Member):
@@ -84,7 +85,7 @@ async def update_time(member: Member):
     last = dt.datetime.fromtimestamp(member_data.get("last"))
     now = dt.datetime.utcnow()
     
-    session = (now - last) / dt.timedelta(hours=1)  # Convert into hours
+    session = to_hours(now - last)
     time = member_data.get("time", 0) + session
     update_data(member, time, field="time")
     
@@ -100,7 +101,7 @@ def add_time(member: Member, value: Union[float, dt.timedelta]):
     if type(value) is float:
         time += value
     elif type(value) is dt.timedelta:
-        time += value / dt.timedelta(hours=1)
+        time += to_hours(value)
     
     update_data(member, time, field="time")
 
@@ -120,8 +121,10 @@ async def increase_streak(member: Member):
 def streak_day() -> dt.datetime:
     """Return a datetime object for the last day where streaks have been updated"""
 
-    now = dt.datetime.utcnow()
-    return now + dt.timedelta(days=STREAK_WEEK_DAY - now.weekday())
+    now = dt.datetime.utcnow().date()
+    days = abs(STREAK_WEEK_DAY - now.weekday())
+    day = now - dt.timedelta(days=days)
+    return dt.datetime.combine(day, dt.time())
 
 
 async def handle_midnight(member):
@@ -136,8 +139,13 @@ async def handle_midnight(member):
     else:
         await reset_progress(member)
     
-    update_data(member, now - streak_day(), "time")
+    time = to_hours(now - streak_day())
+    update_data(member, time, field="time")
 
+
+def to_hours(delta: dt.timedelta) -> float:
+    """Convert a timedelta object into a number of hours"""
+    return delta / dt.timedelta(hours=1)
 
 
 class Hyperactive(Cog):

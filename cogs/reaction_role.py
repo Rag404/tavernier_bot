@@ -2,7 +2,7 @@ from discord import ApplicationContext, AutocompleteContext, Bot, Cog, Emoji, Gu
 from discord.ext.commands import is_owner
 from data.config import REACTION_ROLES_PATH
 from typing import Union
-from my_utils import log
+from resources.utils import log
 import json
 
 

@@ -1,46 +1,41 @@
 from discord import Cog, Bot, Member, VoiceState
-from data.config import STREAK_SAVE_FILE, STREAK_DATA, STREAK_WEEK_DAY, STREAK_HYPERACTIVE, HYPERACTIVE_ROLE, STREAK_TIME_MIN, REDIRECT_VOICE_CHANNEL
-from my_utils import log
+from data.config import STREAK_DATA, STREAK_WEEK_DAY, STREAK_HYPERACTIVE, HYPERACTIVE_ROLE, STREAK_TIME_MIN, REDIRECT_VOICE_CHANNEL
+from resources.database import database
+from resources.utils import log
 from typing import Union
 import datetime as dt
-import json
+
+
+col = database.get_collection("hyperactive")
 
 
 def read_data(member: Member = None, *, field: str = None) -> Union[dict, int, float]:
     """Get either the entire data, a member's data, or only a field"""
-
-    with open(STREAK_SAVE_FILE, 'r') as file:
-        data: dict = json.load(file)
-    
-    value = data.copy()
     
     if member:
-        value = data.get(str(member.id), None)
+        value = col.find_one({"_id": member.id})
         
         if value is None: # Handling member not already known
-            update_data(member, STREAK_DATA)
-            value = STREAK_DATA
+            value = col.insert_one({"_id": member.id} | STREAK_DATA)
         
         if field:
-            value = value.get(field, None)
+            value = value.get(field)
+        
+        return value
     
-    return value
+    else:
+        return col.find({})
 
 
 def update_data(member: Member, member_data, *, field: str = None):
     """Update either the data, or only a field, of a member"""
-
-    data = read_data()
     
     if field:
         assert type(member_data) in (int, float)
-        data[str(member.id)][field] = member_data
+        col.update_one({"_id": member.id}, {"$set": {field: member_data}})
     else:
-        assert type(member_data) is dict
-        data[str(member.id)] = member_data
-    
-    with open(STREAK_SAVE_FILE, 'w') as file:
-        json.dump(data, file)
+        assert type(member_data) is dict and member_data.keys() == STREAK_DATA.keys()
+        col.update_one({"_id": member.id}, {"$set": member_data})
 
 
 async def reset_progress(member: Member):

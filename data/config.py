@@ -7,7 +7,8 @@ root_path = __file__[:-15]
 
 # Global
 TAVERN_ID = 807743905121566720
-OWNER_ID = 576435921390403623
+OWNER_ID  = 576435921390403623
+DB_NAME   = 'tavernier_bot'
 
 # Main
 BOT_GUILDS = [807743905121566720, 731083709658169344]
@@ -50,9 +51,9 @@ ROOM_LEADER_OVERWRITES = discord.PermissionOverwrite(manage_channels=True, manag
 WELCOME_CHANNEL = 807900462794932236
 
 # Hyperactive role
-HYPERACTIVE_ROLE   = 939867561284227102
-STREAK_SAVE_FILE   = root_path + '/data/hyperactive_progress.json'
-STREAK_DATA        = {"streak": 0, "time": 0, "last": 0}
-STREAK_WEEK_DAY    = 0  # 0 Monday, 1 Tuesday, etc...
-STREAK_HYPERACTIVE = 2  # Streak required to get the hyperactive role
-STREAK_TIME_MIN    = dt.timedelta(hours=1)
+HYPERACTIVE_ROLE     = 939867561284227102
+STREAK_DB_COLLECTION = 'hyperactive'
+STREAK_DATA          = {"streak": 0, "time": 0, "last": 0}
+STREAK_WEEK_DAY      = 0  # 0 Monday, 1 Tuesday, etc...
+STREAK_HYPERACTIVE   = 2  # Streak required to get the hyperactive role
+STREAK_TIME_MIN      = dt.timedelta(hours=1)

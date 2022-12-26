@@ -4,7 +4,7 @@ from data.config import REDIRECT_VOICE_CHANNEL, ROOMS_CATEGORY, ROOMS_SAVE_PATH,
 from discord.utils import get
 from random import choice
 from typing import Union
-from my_utils import log
+from resources.utils import log
 
 
 rooms = {}

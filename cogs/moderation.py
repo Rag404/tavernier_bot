@@ -1,6 +1,6 @@
 from discord import Cog, ApplicationContext, Bot, Member, default_permissions, slash_command, option
 from discord.utils import get
-from my_utils import log
+from resources.utils import log
 
 class Moderation(Cog):
     """Commandes de modération"""

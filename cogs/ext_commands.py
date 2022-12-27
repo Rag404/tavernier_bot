@@ -85,10 +85,6 @@ class ExtCommands(Cog):
             value = ", ".join([f"`{e}`" for e in sorted(unloaded(ctx))]) or "aucune",
             inline = False
         )
-        embed.add_field(
-            name="ABC",
-            value=""
-        )
         
         await ctx.respond(embed=embed)
         

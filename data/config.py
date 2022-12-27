@@ -26,6 +26,7 @@ BOT_EXTENSIONS = [
 ]
 
 # Error handling
+CONSOLE_CHANNEL = 731083709658169347
 TRACEBACK_FILE_PATH = root_path + '/data/last_traceback.txt'
 
 # Infochannels

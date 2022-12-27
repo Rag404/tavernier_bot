@@ -53,7 +53,6 @@ WELCOME_CHANNEL = 807900462794932236
 # Hyperactive role
 HYPERACTIVE_ROLE     = 939867561284227102
 STREAK_DB_COLLECTION = 'hyperactive'
-STREAK_DATA          = {"streak": 0, "time": 0, "last": 0}
 STREAK_WEEK_DAY      = 0  # 0 Monday, 1 Tuesday, etc...
 STREAK_HYPERACTIVE   = 2  # Streak required to get the hyperactive role
 STREAK_TIME_MIN      = dt.timedelta(hours=1)

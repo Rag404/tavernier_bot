@@ -78,12 +78,16 @@ class ExtCommands(Cog):
         embed = Embed(title="Liste des extensions")
         embed.add_field(
             name = ":green_circle: Chargées",
-            value = ", ".join([f"`{e}`" for e in sorted(loaded(ctx))])
+            value = ", ".join([f"`{e}`" for e in sorted(loaded(ctx))]) or "aucune"
         )
         embed.add_field(
             name =":o: Déchargées",
-            value = ", ".join([f"`{e}`" for e in sorted(unloaded(ctx))]),
+            value = ", ".join([f"`{e}`" for e in sorted(unloaded(ctx))]) or "aucune",
             inline = False
+        )
+        embed.add_field(
+            name="ABC",
+            value=""
         )
         
         await ctx.respond(embed=embed)

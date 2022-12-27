@@ -1,10 +1,11 @@
 from discord import Bot, Cog, SlashCommandGroup, ApplicationContext, AutocompleteContext, Embed, default_permissions, option
 from discord.ext.commands import is_owner
 from typing import Union
+from resources.utils import log
 import os
 
 
-def extensions() -> list[str]:
+def extensions(ctx) -> list[str]:
     """List of extensions in the 'cogs' folder"""
     return [f[:-3] for f in os.listdir("cogs/") if os.path.isfile("cogs/" + f) and f.endswith(".py")]
 
@@ -16,7 +17,7 @@ def loaded(ctx: Union[ApplicationContext, AutocompleteContext]) -> list[str]:
 
 def unloaded(ctx: Union[ApplicationContext, AutocompleteContext]) -> list[str]:
     """List of unloaded extensions"""
-    extensions_, loaded_ = extensions(), loaded(ctx)
+    extensions_, loaded_ = extensions(ctx), loaded(ctx)
     return [e for e in extensions_ if e not in loaded_]
 
 
@@ -38,6 +39,7 @@ class ExtCommands(Cog):
         except Exception as e:
             await ctx.respond(f"Error :\n```\n{e}\n```")
         else:
+            log(f'"{extension}" loaded')
             await ctx.respond(f"`{extension}` is now loaded")
 
 
@@ -51,19 +53,21 @@ class ExtCommands(Cog):
         except Exception as e:
             await ctx.respond(f"Error :\n```\n{e}\n```")
         else:
+            log(f'"{extension}" unloaded')
             await ctx.respond(f"`{extension}` is now unloaded")
     
     
     @ext_commands.command(name="reload")
     @default_permissions(administrator=True)
     @is_owner()
-    @option("extension", str, autocomplete=extensions)
+    @option("extension", str, autocomplete=loaded)
     async def reload_ext(self, ctx: ApplicationContext, extension: str):
         try:
             self.bot.reload_extension("cogs." + extension)
         except Exception as e:
             await ctx.respond(f"Error :\n```\n{e}\n```")
         else:
+            log(f'"{extension}" reloaded')
             await ctx.respond(f"`{extension}` has been reloaded")
     
     

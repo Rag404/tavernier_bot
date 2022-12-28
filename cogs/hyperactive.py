@@ -1,42 +1,40 @@
 from discord import Cog, Bot, Member, VoiceState
-from data.config import STREAK_WEEK_DAY, STREAK_HYPERACTIVE, HYPERACTIVE_ROLE, STREAK_TIME_MIN, REDIRECT_VOICE_CHANNEL, STREAK_DB_COLLECTION
+from data.config import STREAK_WEEK_DAY, STREAK_HYPERACTIVE, HYPERACTIVE_ROLE, STREAK_TIME_MIN, REDIRECT_VOICE_CHANNEL, STREAK_DB_COLLECTION, TIMEZONE
 from resources.database import database
 from resources.utils import log
 import datetime as dt
-import pytz
 
 col = database.get_collection(STREAK_DB_COLLECTION)
 
 
 class MemberData:
-    FIELDS = ("streak", "time", "last", "done")
-    
-    
     def __init__(self, member: Member, streak: int = 0, time: float = 0, last: float = 0, done: bool = False):
         self.member = member
         """The `discord.Member` object"""
         
         self.streak = streak
         """The member's week streak"""
-        self.time = time
+        self.time = dt.timedelta(hours=time)
         """Hours spent in a voice channel for the current week"""
-        self.last = last
+        self.last = TIMEZONE.localize(dt.datetime.fromtimestamp(last))
         """The last time the member entered/left a voice channel (as timestamp)"""
         self.done = done
         """Whether or not the member has reached the weekly goal"""
         
-        self.now = dt.datetime.now(pytz.timezone("CET"))
-        """Time where the object was created"""
-    
-    
-    def data(self):
-        """Return data as a dict"""
-        return {k: e for k, e in self.__dict__.items() if k in self.FIELDS}
+        self.now = dt.datetime.now(TIMEZONE)
+        """Time when the object was created"""
     
     
     def commit(self):
         """Push member data into the database"""
-        col.update_one({"_id": self.member.id}, {"$set": self.data()}, upsert=True)
+        
+        data = {
+            "streak": self.streak,
+            "time": self.time / dt.timedelta(hours=1),  # Convert into hours
+            "last": self.last.timestamp(),
+            "done": self.done
+        }
+        col.update_one({"_id": self.member.id}, {"$set": data}, upsert=True)
 
 
     async def reset_progress(self):
@@ -53,29 +51,24 @@ class MemberData:
     def expired(self) -> bool:
         """Check if a member has exceeded the time limit to increase his streak. Return False if the member is new"""
 
-        if (timestamp := self.last) == 0:
+        if self.last == dt.datetime(1970, 1, 1):
             return False
         
-        last_update = dt.datetime.fromtimestamp(timestamp)
-        return streak_day(self.now) >= last_update
+        return streak_day(self.now) >= self.last
 
 
     def reached(self) -> bool:
         """Check if a member has reached the time needed to aquire the hyperactive role"""
 
-        time = dt.timedelta(hours=self.time)
-        return time >= STREAK_TIME_MIN
+        return self.time >= STREAK_TIME_MIN
 
 
     async def update_time(self):
         """Add the time spent between now and the connection of a member to his progress"""
 
-        last = dt.datetime.fromtimestamp(self.last)
+        self.time += self.now - self.last
         
-        session = to_hours(self.now - last)
-        self.time += session
-        
-        if self.done == False and self.reached():
+        if not self.done and self.reached():
             self.done = True
             await self.increase_streak()
 
@@ -94,29 +87,23 @@ class MemberData:
     async def handle_midnight(self):
         """Handle the case where a member connected before and left after midnight on reset day"""
 
-        last = dt.datetime.fromtimestamp(self.last)
         day = streak_day(self.now)
-        self.time += day - last
+        self.time += day - self.last
         
         if self.reached():
             await self.increase_streak()
         else:
             await self.reset_progress()
         
-        self.time = to_hours(self.now - day)
+        self.time = self.now - day
 
 
 
 def get_data(member: Member) -> MemberData:
     """Get a member's data from the database"""
     
-    result = col.find_one({"_id": member.id}, {"_id": 0})
+    result = col.find_one({"_id": member.id}, {"_id": 0}) or {}
     return MemberData(member, **result)
-
-
-def to_hours(delta: dt.timedelta) -> float:
-    """Convert a timedelta object into a number of hours"""
-    return delta / dt.timedelta(hours=1)
 
 
 def streak_day(now: dt.date) -> dt.datetime:
@@ -124,7 +111,8 @@ def streak_day(now: dt.date) -> dt.datetime:
 
     days = abs(STREAK_WEEK_DAY - now.weekday())
     day = now - dt.timedelta(days=days)
-    return dt.datetime.combine(day, dt.time())
+    full = dt.datetime.combine(day, dt.time())
+    return TIMEZONE.localize(full)
 
 
 

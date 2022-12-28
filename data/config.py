@@ -1,4 +1,4 @@
-import discord
+import discord, pytz
 import datetime as dt
 
 # Dirty way to get the root directory (removes '\data\config.py' at the end of the str)
@@ -8,7 +8,9 @@ root_path = __file__[:-15]
 # Global
 TAVERN_ID = 807743905121566720
 OWNER_ID  = 576435921390403623
+BOT_ROLE  = 939867561284227102  # This is the role that ALL BOTS have
 DB_NAME   = 'tavernier_bot'
+TIMEZONE = pytz.timezone("CET")
 
 # Main
 BOT_GUILDS = [807743905121566720, 731083709658169344]
@@ -44,7 +46,7 @@ MOVIES_PATH       = root_path + '/data/status/movies.txt'
 # Voice rooms
 REDIRECT_VOICE_CHANNEL = 996160558371979355
 ROOMS_CATEGORY         = 996159603324768276
-ROOMS_SAVE_PATH        = root_path + '/data/rooms_save.json'
+ROOMS_DB_COLLECTION    = 'rooms'
 ROOM_LEADER_OVERWRITES = discord.PermissionOverwrite(manage_channels=True, manage_permissions=True, move_members=True, mute_members=True, deafen_members=True, manage_events=True)
 
 # Welcome

@@ -1,4 +1,4 @@
-from discord import ApplicationContext, Bot, Cog, Color, DiscordException
+from discord import ApplicationContext, Bot, Cog, DiscordException
 from discord.ext.commands import NotOwner, MissingPermissions
 
 

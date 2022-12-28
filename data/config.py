@@ -26,15 +26,14 @@ BOT_EXTENSIONS = [
 ]
 
 # Error handling
-CONSOLE_CHANNEL = 731083709658169347
-TRACEBACK_FILE_PATH = root_path + '/data/last_traceback.txt'
+CONSOLE_CHANNEL = 1046825453006106755
 
 # Infochannels
 MEMBERS_INFOCHANNEL = 1046480685059280896
 ONLINES_INFOCHANNEL = 963536054621716520
 
 # Reaction-roles
-REACTION_ROLES_PATH = root_path + '/data/reaction_roles_test.json'
+REACTION_ROLES_PATH = root_path + '/data/reaction_roles.json'
 
 # Status
 ANIMES_PATH       = root_path + '/data/status/animes.txt'
@@ -43,8 +42,8 @@ VIDEO_GAMES_PATH  = root_path + '/data/status/video_games.txt'
 MOVIES_PATH       = root_path + '/data/status/movies.txt'
 
 # Voice rooms
-REDIRECT_VOICE_CHANNEL = 996099476399870114
-ROOMS_CATEGORY         = 998274617275850754
+REDIRECT_VOICE_CHANNEL = 996160558371979355
+ROOMS_CATEGORY         = 996159603324768276
 ROOMS_SAVE_PATH        = root_path + '/data/rooms_save.json'
 ROOM_LEADER_OVERWRITES = discord.PermissionOverwrite(manage_channels=True, manage_permissions=True, move_members=True, mute_members=True, deafen_members=True, manage_events=True)
 

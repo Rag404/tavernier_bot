@@ -36,7 +36,7 @@ class MemberData:
     
     def commit(self):
         """Push member data into the database"""
-        col.update_one({"_id": self.member.id}, self.data(), upsert=True)
+        col.update_one({"_id": self.member.id}, {"$set": self.data()}, upsert=True)
 
 
     async def reset_progress(self):
@@ -57,7 +57,7 @@ class MemberData:
             return False
         
         last_update = dt.datetime.fromtimestamp(timestamp)
-        return streak_day() >= last_update
+        return streak_day(self.now) >= last_update
 
 
     def reached(self) -> bool:

@@ -1,4 +1,4 @@
-from discord import Cog, Bot, Member, VoiceState
+from discord import Cog, Bot, Member, VoiceState, ApplicationContext, Embed, Color, slash_command, user_command, option
 from data.config import STREAK_WEEK_DAY, STREAK_HYPERACTIVE, HYPERACTIVE_ROLE, STREAK_TIME_MIN, REDIRECT_VOICE_CHANNEL, STREAK_DB_COLLECTION, TIMEZONE
 from resources.database import database
 from resources.utils import log
@@ -115,6 +115,17 @@ def streak_day(now: dt.date) -> dt.datetime:
     return TIMEZONE.localize(full)
 
 
+def timedelta_str(td: dt.timedelta) -> str:
+    """Format timedelta values into string"""
+    
+    values = {}
+    values["j"], r = divmod(td.seconds, 86400)
+    values["h"], r = divmod(r, 3600)
+    values["min"], values["s"] = divmod(r, 60)
+    
+    return " ".join([str(v) + k for k, v in values.items() if v > 0]) or "0s"
+
+
 
 class Hyperactive(Cog):
     """Rôle Hyperactif automatique"""
@@ -145,6 +156,41 @@ class Hyperactive(Cog):
         
         memberdata.last = memberdata.now
         memberdata.commit()
+    
+    
+    @slash_command(name="stats")
+    @option("user", Member, description="Le membre à qui afficher les stats (vous-même par défaut)", required=False)
+    async def show_stats(self, ctx: ApplicationContext, user: Member):
+        """Montre tes statistiques, ou celles d'un autre membre"""
+        
+        await ctx.defer()
+        
+        data = get_data(user or ctx.author)
+        member = data.member
+        
+        embed = Embed(
+            title = f"Statistiques de {member}",
+            color = Color.embed_background()
+        )
+        embed.set_thumbnail(url=member.avatar.url + "?size=1024")
+        embed.add_field(
+            name = "⏱️ Ancienneté",
+            value = f"Compte créé le <t:{int(member.created_at.timestamp())}:D>\n" +
+                    f"Serveur rejoint le <t:{int(member.joined_at.timestamp())}:D>"
+        )
+        embed.add_field(
+            name = "⚡ Activité",
+            value = f"**{timedelta_str(data.time)}** en vocal cette semaine\n" +
+                    f"**{data.streak} semaine{'s' if data.streak > 1 else ''}** d'hyperactivité",
+            inline = False
+        )
+        
+        await ctx.respond(embed=embed)
+    
+    
+    @user_command(name="Statistiques")
+    async def show_stats_user(self, ctx, user):
+        await self.show_stats(ctx, user)
 
 
 

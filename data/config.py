@@ -8,9 +8,9 @@ root_path = __file__[:-15]
 # Global
 TAVERN_ID = 807743905121566720
 OWNER_ID  = 576435921390403623
-BOT_ROLE  = 939867561284227102  # This is the role that ALL BOTS have
+BOT_ROLE  = 807795492468949012 # This is the role that ALL BOTS have
 DB_NAME   = 'tavernier_bot'
-TIMEZONE = pytz.timezone("CET")
+TIMEZONE  = pytz.timezone("CET")
 
 # Main
 BOT_GUILDS = [807743905121566720, 731083709658169344]

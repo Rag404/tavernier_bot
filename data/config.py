@@ -1,5 +1,5 @@
 import discord, pytz
-import datetime as dt
+from datetime import timedelta
 
 # Dirty way to get the root directory (removes '\data\config.py' at the end of the str)
 root_path = __file__[:-15]
@@ -56,12 +56,12 @@ WELCOME_CHANNEL = 807900462794932236
 HYPERACTIVE_DB_COLLECTION = 'hyperactive'
 HYPERACTIVE_WEEK_DAY      = 0  # 0 Monday, 1 Tuesday ... 6 Sunday
 HYPERACTIVE_LEVELS = [
-    td(0),        # Level 0
-    td(hours=1),  # Level 1
-    td(hours=2),  # etc...
-    td(hours=3),
-    td(hours=4),
-    td(hours=5)
+    timedelta(0),        # Level 0
+    timedelta(hours=1),  # Level 1
+    timedelta(hours=2),  # etc...
+    timedelta(hours=3),
+    timedelta(hours=4),
+    timedelta(hours=5)
 ]
 HYPERACTIVE_ROLES = [
     None,                 # Level 0

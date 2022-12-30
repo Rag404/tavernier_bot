@@ -1,25 +1,23 @@
 from discord import Cog, Bot, Member, VoiceState, ApplicationContext, Embed, Color, slash_command, user_command, option
-from data.config import STREAK_WEEK_DAY, STREAK_HYPERACTIVE, HYPERACTIVE_ROLE, STREAK_TIME_MIN, REDIRECT_VOICE_CHANNEL, STREAK_DB_COLLECTION, TIMEZONE
+from data.config import HYPERACTIVE_DB_COLLECTION, HYPERACTIVE_WEEK_DAY, HYPERACTIVE_LEVELS, HYPERACTIVE_ROLES, REDIRECT_VOICE_CHANNEL, TIMEZONE
 from resources.database import database
 from resources.utils import log
 import datetime as dt
 
-col = database.get_collection(STREAK_DB_COLLECTION)
+col = database.get_collection(HYPERACTIVE_DB_COLLECTION)
 
 
 class MemberData:
-    def __init__(self, member: Member, streak: int = 0, time: float = 0, last: float = 0, done: bool = False):
+    def __init__(self, member: Member, level: int = 0, time: float = 0, last: float = 0):
         self.member = member
         """The `discord.Member` object"""
         
-        self.streak = streak
-        """The member's week streak"""
+        self.level = level
+        """The hyperactive level the member has reached"""
         self.time = dt.timedelta(hours=time)
         """Hours spent in a voice channel for the current week"""
         self.last = TIMEZONE.localize(dt.datetime.fromtimestamp(last))
         """The last time the member entered/left a voice channel (as timestamp)"""
-        self.done = done
-        """Whether or not the member has reached the weekly goal"""
         
         self.now = dt.datetime.now(TIMEZONE)
         """Time when the object was created"""
@@ -29,59 +27,61 @@ class MemberData:
         """Push member data into the database"""
         
         data = {
-            "streak": self.streak,
+            "level": self.level,
             "time": self.time / dt.timedelta(hours=1),  # Convert into hours
-            "last": self.last.timestamp(),
-            "done": self.done
+            "last": self.last.timestamp()
         }
         col.update_one({"_id": self.member.id}, {"$set": data}, upsert=True)
 
 
-    async def reset_progress(self):
-        """Reset the streak of a member, and remove the hyperactive role from him if needed"""
-
-        role = self.member.guild.get_role(HYPERACTIVE_ROLE)
-        
-        await self.member.remove_roles(role, reason=f"Lost a streak of {self.streak}")
-        log(self.member, "lost a streak of", self.streak)
-        
-        self.streak = 0
-
-
     def expired(self) -> bool:
-        """Check if a member has exceeded the time limit to increase his streak. Return False if the member is new"""
+        """Check if a member has exceeded the time limit to increase his level. Return False if the member is new"""
 
-        if self.last == dt.datetime(1970, 1, 1):
+        if self.last.timestamp() == 0:
             return False
         
         return streak_day(self.now) >= self.last
 
 
     def reached(self) -> bool:
-        """Check if a member has reached the time needed to aquire the hyperactive role"""
-
-        return self.time >= STREAK_TIME_MIN
-
-
+        """Check if a member has the time needed to reach the next level"""
+        
+        return self.new_level() >= self.level + 1
+    
+    
+    def new_level(self) -> int:
+        """Returns the new level of the member based on his time and current level"""
+        
+        if self.level+1 < len(HYPERACTIVE_LEVELS) and self.time >= HYPERACTIVE_LEVELS[self.level+1]:
+            # If the time matches the requirement for the next level
+            return self.level + 1
+        
+        elif self.level-1 >= 0 and self.time < HYPERACTIVE_LEVELS[self.level-1]:
+            # If the time doesn't matches the requirement for the current level
+            return self.level - 1
+        
+        else:
+            return self.level
+    
+    
     async def update_time(self):
         """Add the time spent between now and the connection of a member to his progress"""
 
         self.time += self.now - self.last
         
-        if not self.done and self.reached():
-            self.done = True
-            await self.increase_streak()
-
-
-    async def increase_streak(self):
-        """Increase the streak of a member and give him the hyperactive role if needed"""
-
-        if self.streak < STREAK_HYPERACTIVE <= self.streak + 1:
-            role = self.member.guild.get_role(HYPERACTIVE_ROLE)
-            await self.member.add_roles(role)
-            log(self.member, "got the hyperactive role")
+        if self.reached():
+            await self.update_role()
+    
+    
+    async def update_role(self):
+        if (new_level := self.new_level()) == self.level:
+            return
         
-        self.streak += 1
+        if old_role := self.member.guild.get_role(HYPERACTIVE_ROLES[self.level]):
+            await self.member.remove_roles(old_role)
+        
+        if new_role := self.member.guild.get_role(HYPERACTIVE_ROLES[new_level]):
+            await self.member.add_roles(new_role)
 
 
     async def handle_midnight(self):
@@ -89,13 +89,11 @@ class MemberData:
 
         day = streak_day(self.now)
         self.time += day - self.last
-        
-        if self.reached():
-            await self.increase_streak()
-        else:
-            await self.reset_progress()
+        await self.update_role()
         
         self.time = self.now - day
+        if self.reached():
+            await self.update_role()
 
 
 
@@ -109,7 +107,7 @@ def get_data(member: Member) -> MemberData:
 def streak_day(now: dt.date) -> dt.datetime:
     """Return a datetime object for the last weekly streak update relative to a given date"""
 
-    days = abs(STREAK_WEEK_DAY - now.weekday())
+    days = abs(HYPERACTIVE_WEEK_DAY - now.weekday())
     day = now - dt.timedelta(days=days)
     full = dt.datetime.combine(day, dt.time())
     return TIMEZONE.localize(full)
@@ -152,7 +150,7 @@ class Hyperactive(Cog):
                 await memberdata.update_time()
         
         elif memberdata.expired():
-            memberdata.done = False
+            memberdata.level = memberdata.new_level()
         
         memberdata.last = memberdata.now
         memberdata.commit()
@@ -181,7 +179,7 @@ class Hyperactive(Cog):
         embed.add_field(
             name = "⚡ Activité",
             value = f"**{timedelta_str(data.time)}** en vocal cette semaine\n" +
-                    f"**{data.streak} semaine{'s' if data.streak > 1 else ''}** d'hyperactivité",
+                    f"**Niveau {max(data.level, data.new_level())}** d'hyperactivité",
             inline = False
         )
         

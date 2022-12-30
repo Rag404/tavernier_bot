@@ -53,8 +53,21 @@ ROOM_LEADER_OVERWRITES = discord.PermissionOverwrite(manage_channels=True, manag
 WELCOME_CHANNEL = 807900462794932236
 
 # Hyperactive role
-HYPERACTIVE_ROLE     = 1010624327038812270
-STREAK_DB_COLLECTION = 'hyperactive'
-STREAK_WEEK_DAY      = 0  # 0 Monday, 1 Tuesday, etc...
-STREAK_HYPERACTIVE   = 2  # Streak required to get the hyperactive role
-STREAK_TIME_MIN      = dt.timedelta(hours=1)
+HYPERACTIVE_DB_COLLECTION = 'hyperactive'
+HYPERACTIVE_WEEK_DAY      = 0  # 0 Monday, 1 Tuesday ... 6 Sunday
+HYPERACTIVE_LEVELS = [
+    td(0),        # Level 0
+    td(hours=1),  # Level 1
+    td(hours=2),  # etc...
+    td(hours=3),
+    td(hours=4),
+    td(hours=5)
+]
+HYPERACTIVE_ROLES = [
+    None,                 # Level 0
+    1058360019952877648,  # Level 1
+    1058360464687513630,  # etc...
+    1058360586947276850,
+    1058360693507751966,
+    1058360811946516502
+]

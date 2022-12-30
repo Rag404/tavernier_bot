@@ -138,11 +138,7 @@ class VoiceRoom(Cog):
             if after.channel.id == REDIRECT_VOICE_CHANNEL:
                 room = await create_room(member)
         
-        
-        if before.channel and before.channel.category and before.channel.category.id == ROOMS_CATEGORY:
-            if not (room := get_room(before.channel)):
-                return
-            
+        if before.channel != after.channel and (room := get_room(before.channel)):
             if room.empty():
                 await room.delete(reason="Room vide")
                 log(f'The room "{room.channel.name}" has been deserted')

@@ -1,7 +1,6 @@
 from discord import Cog, Bot, Member, VoiceState, ApplicationContext, Embed, Color, slash_command, user_command, option
 from data.config import HYPERACTIVE_DB_COLLECTION, HYPERACTIVE_WEEK_DAY, HYPERACTIVE_LEVELS, HYPERACTIVE_ROLES, REDIRECT_VOICE_CHANNEL, TIMEZONE
 from resources.database import database
-from resources.utils import log
 import datetime as dt
 
 col = database.get_collection(HYPERACTIVE_DB_COLLECTION)

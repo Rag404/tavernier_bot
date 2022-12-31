@@ -71,6 +71,9 @@ class Room:
 def get_room(channel: VoiceChannel) -> Optional[Room]:
     """Get a room's data by its id, `None` if not found"""
     
+    if not channel:
+        return
+    
     result = col.find_one({"_id": channel.id}, {"_id": 0})
     
     if result:

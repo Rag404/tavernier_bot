@@ -63,6 +63,20 @@ class MemberData:
             return self.level
     
     
+    def time_str(self) -> str:
+        """Format member's time values into string"""
+        
+        if self.expired():
+            return "0s"
+        
+        values = {}
+        values["j"], r = divmod(self.time.seconds, 86400)
+        values["h"], r = divmod(r, 3600)
+        values["min"], values["s"] = divmod(r, 60)
+        
+        return " ".join([str(v) + k for k, v in values.items() if v > 0]) or "0s"
+    
+    
     async def update_time(self):
         """Add the time spent between now and the connection of a member to his progress"""
 
@@ -112,17 +126,6 @@ def streak_day(now: dt.date) -> dt.datetime:
     return TIMEZONE.localize(full)
 
 
-def timedelta_str(td: dt.timedelta) -> str:
-    """Format timedelta values into string"""
-    
-    values = {}
-    values["j"], r = divmod(td.seconds, 86400)
-    values["h"], r = divmod(r, 3600)
-    values["min"], values["s"] = divmod(r, 60)
-    
-    return " ".join([str(v) + k for k, v in values.items() if v > 0]) or "0s"
-
-
 
 class Hyperactive(Cog):
     """Rôle Hyperactif automatique"""
@@ -150,6 +153,7 @@ class Hyperactive(Cog):
         
         elif memberdata.expired():
             memberdata.level = memberdata.new_level()
+            memberdata.time = dt.timedelta(0)
         
         memberdata.last = memberdata.now
         memberdata.commit()
@@ -177,7 +181,7 @@ class Hyperactive(Cog):
         )
         embed.add_field(
             name = "⚡ Activité",
-            value = f"**{timedelta_str(data.time)}** en vocal cette semaine\n" +
+            value = f"**{data.time_str()}** en vocal cette semaine\n" +
                     f"**Niveau {max(data.level, data.new_level())}** d'hyperactivité",
             inline = False
         )

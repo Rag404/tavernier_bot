@@ -1,4 +1,4 @@
-import discord, pytz
+import discord
 from datetime import timedelta
 
 # Dirty way to get the root directory (removes '\data\config.py' at the end of the str)
@@ -10,7 +10,6 @@ TAVERN_ID = 807743905121566720
 OWNER_ID  = 576435921390403623
 BOT_ROLE  = 807795492468949012 # This is the role that ALL BOTS have
 DB_NAME   = 'tavernier_bot'
-TIMEZONE  = pytz.timezone("CET")
 
 # Main
 BOT_GUILDS = [807743905121566720, 731083709658169344]

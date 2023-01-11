@@ -1,5 +1,5 @@
 from discord import Cog, Bot, Member, VoiceState, ApplicationContext, Embed, Color, slash_command, user_command, option
-from data.config import HYPERACTIVE_DB_COLLECTION, HYPERACTIVE_WEEK_DAY, HYPERACTIVE_LEVELS, HYPERACTIVE_ROLES, REDIRECT_VOICE_CHANNEL, TIMEZONE
+from data.config import HYPERACTIVE_DB_COLLECTION, HYPERACTIVE_WEEK_DAY, HYPERACTIVE_LEVELS, HYPERACTIVE_ROLES, REDIRECT_VOICE_CHANNEL
 from resources.database import database
 import datetime as dt
 
@@ -15,15 +15,17 @@ class MemberData:
         """The hyperactive level the member has reached"""
         self.time = dt.timedelta(hours=time)
         """Hours spent in a voice channel for the current week"""
-        self.last = TIMEZONE.localize(dt.datetime.fromtimestamp(last))
+        self.last = dt.datetime.fromtimestamp(last)
         """The last time the member entered/left a voice channel (as timestamp)"""
         
-        self.now = dt.datetime.now(TIMEZONE)
+        self.now = dt.datetime.utcnow()
         """Time when the object was created"""
     
     
     def commit(self):
         """Push member data into the database"""
+        
+        print(self.last)
         
         data = {
             "level": self.level,
@@ -123,8 +125,7 @@ def streak_day(now: dt.date) -> dt.datetime:
     days = abs(HYPERACTIVE_WEEK_DAY - now.weekday())
     day = now - dt.timedelta(days=days)
     full = dt.datetime.combine(day, dt.time())
-    return TIMEZONE.localize(full)
-
+    return full
 
 
 class Hyperactive(Cog):

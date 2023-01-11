@@ -4,7 +4,6 @@ from resources.database import database
 import datetime as dt
 
 col = database.get_collection(HYPERACTIVE_DB_COLLECTION)
-SEC_IN_WEEK = 604800
 
 
 class MemberData:
@@ -25,6 +24,8 @@ class MemberData:
     
     def commit(self):
         """Push member data into the database"""
+        
+        print(self.last)
         
         data = {
             "level": self.level,
@@ -52,11 +53,7 @@ class MemberData:
     def new_level(self) -> int:
         """Returns the new level of the member based on his time and current level"""
         
-        if (diff := (self.now - self.last).total_seconds()) > SEC_IN_WEEK:
-            # If the member last connected a week ago or more, subtract the right amount of levels
-            return max(0, self.level - int(diff) // SEC_IN_WEEK)
-        
-        elif self.level+1 < len(HYPERACTIVE_LEVELS) and self.time >= HYPERACTIVE_LEVELS[self.level+1]:
+        if self.level+1 < len(HYPERACTIVE_LEVELS) and self.time >= HYPERACTIVE_LEVELS[self.level+1]:
             # If the time matches the requirement for the next level
             return self.level + 1
         

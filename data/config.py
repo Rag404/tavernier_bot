@@ -8,8 +8,8 @@ root_path = __file__[:-15]
 # Global
 TAVERN_ID = 807743905121566720
 OWNER_ID  = 576435921390403623
-BOT_ROLE  = 807795492468949012 # This is the role that ALL BOTS have
-DB_NAME   = 'tavernier_bot'
+BOT_ROLE  = 939867561284227102 #807795492468949012  # This is the role that ALL BOTS have
+DB_NAME   = 'tavernier_test'  #'tavernier_bot'
 
 # Main
 BOT_GUILDS = [807743905121566720, 731083709658169344]
@@ -27,7 +27,7 @@ BOT_EXTENSIONS = [
 ]
 
 # Error handling
-CONSOLE_CHANNEL = 1046825453006106755
+CONSOLE_CHANNEL = 777181183644663808 #1046825453006106755
 
 # Infochannels
 MEMBERS_INFOCHANNEL = 1046480685059280896
@@ -43,8 +43,8 @@ VIDEO_GAMES_PATH  = root_path + '/data/status/video_games.txt'
 MOVIES_PATH       = root_path + '/data/status/movies.txt'
 
 # Voice rooms
-REDIRECT_VOICE_CHANNEL = 996160558371979355
-ROOMS_CATEGORY         = 996159603324768276
+REDIRECT_VOICE_CHANNEL = 996099476399870114 #996160558371979355
+ROOMS_CATEGORY         = 998274617275850754 #996159603324768276
 ROOMS_DB_COLLECTION    = 'rooms'
 ROOM_LEADER_OVERWRITES = discord.PermissionOverwrite(manage_channels=True, manage_permissions=True, move_members=True, mute_members=True, deafen_members=True, manage_events=True)
 

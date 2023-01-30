@@ -1,6 +1,7 @@
 from discord import Cog, Bot, Member, VoiceState, ApplicationContext, Embed, Color, slash_command, user_command, option
 from data.config import HYPERACTIVE_DB_COLLECTION, HYPERACTIVE_WEEK_DAY, HYPERACTIVE_LEVELS, HYPERACTIVE_ROLES, REDIRECT_VOICE_CHANNEL
 from resources.database import database
+from resources.utils import time2str
 import datetime as dt
 
 col = database.get_collection(HYPERACTIVE_DB_COLLECTION)
@@ -74,12 +75,7 @@ class MemberData:
         if self.expired():
             return "0s"
         
-        values = {}
-        values["j"], r = divmod(self.time.seconds, 86400)
-        values["h"], r = divmod(r, 3600)
-        values["min"], values["s"] = divmod(r, 60)
-        
-        return " ".join([str(v) + k for k, v in values.items() if v > 0]) or "0s"
+        return time2str(self.time)
     
     
     async def update_time(self):

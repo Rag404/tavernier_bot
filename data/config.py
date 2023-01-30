@@ -10,6 +10,7 @@ TAVERN_ID = 807743905121566720
 OWNER_ID  = 576435921390403623
 BOT_ROLE  = 807795492468949012 # This is the role that ALL BOTS have
 DB_NAME   = 'tavernier_bot'
+TIMEZONE  = "CET"
 
 # Main
 BOT_GUILDS = [807743905121566720, 731083709658169344]
@@ -47,6 +48,7 @@ REDIRECT_VOICE_CHANNEL = 996160558371979355
 ROOMS_CATEGORY         = 996159603324768276
 ROOMS_DB_COLLECTION    = 'rooms'
 ROOM_LEADER_OVERWRITES = discord.PermissionOverwrite(manage_channels=True, manage_permissions=True, move_members=True, mute_members=True, deafen_members=True, manage_events=True)
+ROOM_ALONE_TIMER       = timedelta(minutes=5)
 
 # Welcome
 WELCOME_CHANNEL = 807900462794932236

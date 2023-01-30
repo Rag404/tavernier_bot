@@ -1,12 +1,16 @@
 from discord import Bot, CategoryChannel, Cog, Member, ActivityType, SlashCommandGroup, VoiceChannel, VoiceState, PermissionOverwrite, ApplicationContext, AllowedMentions, default_permissions, user_command, option
-from data.config import REDIRECT_VOICE_CHANNEL, ROOMS_CATEGORY, ROOMS_DB_COLLECTION, ROOM_LEADER_OVERWRITES, BOT_ROLE
+from data.config import REDIRECT_VOICE_CHANNEL, ROOMS_CATEGORY, ROOMS_DB_COLLECTION, ROOM_LEADER_OVERWRITES, ROOM_ALONE_TIMER, BOT_ROLE, TIMEZONE
 from discord.utils import get
 from typing import Optional
-from resources.utils import log
+from resources.utils import log, time2str
 from resources.database import database
+from datetime import datetime, timedelta
+from pytz import timezone
+import asyncio
 
 
 col = database.get_collection(ROOMS_DB_COLLECTION)
+tasks = {}
 
 
 class Room:
@@ -40,13 +44,31 @@ class Room:
         return col.delete_one({"_id": self.channel.id})
     
     
+    async def delete_after(self, delay: timedelta, reason: str = None):
+        """Delete the room after the given delay"""
+        
+        await asyncio.sleep(delay.total_seconds())
+        try:
+            await self.delete(reason)
+        except:
+            pass
+    
+    
+    async def begin_alone_cooldown(self):
+        """Will delete the room in a certain amount of time"""
+        
+        tasks[str(self.channel.id)] = asyncio.create_task(self.delete_after(ROOM_ALONE_TIMER, "Membre connecté seul"))
+        timestamp = int((datetime.now(timezone(TIMEZONE)) + ROOM_ALONE_TIMER).timestamp())
+        await self.channel.send(f"Cette room sera supprimée si personne ne rejoint dans **{time2str(ROOM_ALONE_TIMER)}** (<t:{timestamp}:R>)")
+    
+    
     def members(self) -> list[Member]:
         """Get a list of members in the room, excluding bots"""
         return [m for m in self.channel.members if not m.bot]
     
     
-    def empty(self) -> bool:
-        """Check if the room is empty of members (ignore bots)"""
+    def count(self) -> bool:
+        """Return the number of users connected (ignore bots)"""
         return len(self.members()) == 0
 
     
@@ -125,6 +147,16 @@ async def create_room(leader: Member) -> Room:
     room.commit()
     return room
 
+    
+def stop_alone_cooldown(id: int):
+    """Stop the cooldown called with `Room.begin_alone_cooldown()` for a given room ID"""
+    
+    try:
+        tasks[str(id)].cancel()
+        del tasks[str(id)]
+    except:
+        pass
+
 
 
 class VoiceRoom(Cog):
@@ -137,19 +169,36 @@ class VoiceRoom(Cog):
 
     @Cog.listener()
     async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
-        if after.channel:
-            if after.channel.id == REDIRECT_VOICE_CHANNEL:
+        if member.bot:
+            return
+        
+        if (channel := after.channel):
+            if channel.id == REDIRECT_VOICE_CHANNEL:
                 room = await create_room(member)
+                return await room.begin_alone_cooldown()
+            
+            elif channel.category == ROOMS_CATEGORY:
+                #If the member count in the room went from 1 to higher, cancel the cooldown for deleting the room
+                stop_alone_cooldown(channel.id)
         
         if before.channel != after.channel and (room := get_room(before.channel)):
-            if room.empty():
-                await room.delete(reason="Room vide")
-                log(f'The room "{room.channel.name}" has been deserted')
+            if room.count() == 1:
+                # If there was 1 member left BEFORE leaving
+                try:
+                    await room.delete(reason="Room vide")
+                    log(f'The room "{room.channel.name}" has been deserted')
+                except:
+                    pass
             
             elif member == room.leader:
+                print(room.count())
                 new_leader = room.change_leader()
                 await room.channel.send(f"L'ancien leader a quitté, le nouveau leader est {new_leader.mention}")
                 await room.rename_to_game(new_leader)
+
+            if room.count() == 2:
+                # If there were 2 members left BEFORE leaving
+                await room.begin_alone_cooldown()
 
 
     @Cog.listener()

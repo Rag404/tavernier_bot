@@ -48,7 +48,7 @@ REDIRECT_VOICE_CHANNEL = 996160558371979355
 ROOMS_CATEGORY         = 996159603324768276
 ROOMS_DB_COLLECTION    = 'rooms'
 ROOM_LEADER_OVERWRITES = discord.PermissionOverwrite(manage_channels=True, manage_permissions=True, move_members=True, mute_members=True, deafen_members=True, manage_events=True)
-ROOM_ALONE_TIMER       = timedelta(minutes=5)
+ROOM_ALONE_TIMER       = timedelta(weeks=4)
 
 # Welcome
 WELCOME_CHANNEL = 807900462794932236

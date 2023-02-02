@@ -177,7 +177,7 @@ class VoiceRoom(Cog):
                 room = await create_room(member)
                 return await room.begin_alone_cooldown()
             
-            elif channel.category == ROOMS_CATEGORY:
+            elif channel.category.id == ROOMS_CATEGORY:
                 #If the member count in the room went from 1 to higher, cancel the cooldown for deleting the room
                 stop_alone_cooldown(channel.id)
         
@@ -191,7 +191,6 @@ class VoiceRoom(Cog):
                     pass
             
             elif member == room.leader:
-                print(room.count())
                 new_leader = room.change_leader()
                 await room.channel.send(f"L'ancien leader a quitté, le nouveau leader est {new_leader.mention}")
                 await room.rename_to_game(new_leader)

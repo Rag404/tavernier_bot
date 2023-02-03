@@ -1,15 +1,15 @@
 {
-    "games": {
-        "msg_id": 992946891425849426,
-        "embed": {
-            "title": "R\u00f4les de jeux",
-            "color": 16765696
-        },
-        "reactions": {
+    "Games": {
+        "guild": 807743905121566720,
+        "channel": 915562589193392138,
+        "message": 992946891425849426,
+        "title": "R\u00f4les de jeux",
+        "color": 16765696,
+        "choices": {
             "Gamerz": {
                 "role": 915564599498121217,
                 "emoji": "\ud83c\udfae",
-                "description": "Les membres peuvent ping pour jouer avec vous"
+                "label": "Les membres peuvent ping pour jouer avec vous"
             },
             "Minecraft": {
                 "role": 916430255592456252,
@@ -58,26 +58,41 @@
             "Phasmophobia": {
                 "role": 1005888126746644580,
                 "emoji": 1006847220361994270
+            },
+            "Multiversus": {
+                "role": 1007924783830282333,
+                "emoji": 1007924983856635965
+            },
+            "Fortnite": {
+                "role": 1056666630815498250,
+                "emoji": 1056666536577859675
+            },
+            "Rocket League": {
+                "role": 1055958245660966982,
+                "emoji": 1055957797281464470
+            },
+            "Risk": {
+                "role": 1068987751061528606,
+                "emoji": 1068993841358712842
             }
         }
     },
-    "pings": {
-        "msg_id": 992947118417391647,
-        "channel_id": 807899717832409099,
-        "embed": {
-            "title": "R\u00f4les de ping",
-            "color": 16765696
-        },
-        "reactions": {
+    "Pings": {
+        "guild": 807743905121566720,
+        "channel": 915562589193392138,
+        "message": 992947118417391647,
+        "title": "R\u00f4les de ping",
+        "color": 16765696,
+        "choices": {
             "sondages": {
                 "role": 929297384503136286,
                 "emoji": "\ud83d\udd14",
-                "description": "Pour des sondages en tout genre"
+                "label": "Pour des sondages en tout genre"
             },
             "freestuff": {
                 "role": 927811800030933102,
                 "emoji": "\ud83d\udcb8",
-                "description": "Quand des jeux gratuits sont dans <#927655512089190510>"
+                "label": "Quand des jeux gratuits sont dans <#927655512089190510>"
             }
         }
     }

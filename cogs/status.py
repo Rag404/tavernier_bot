@@ -1,5 +1,5 @@
 from discord import Bot, Cog, Guild, Activity
-from data.config import TAVERN_ID, ANIMES_PATH, MUSIC_GENRES_PATH, VIDEO_GAMES_PATH, MOVIES_PATH
+from data.config import TAVERN_ID, STATUS_TIMER, ANIMES_PATH, MUSIC_GENRES_PATH, VIDEO_GAMES_PATH, MOVIES_PATH
 from typing import List
 from random import choice
 from discord.ext import tasks
@@ -37,7 +37,7 @@ class BotStatus(Cog):
         for activity in all_status:
             newActivity = Activity(type=activity[0], name=activity[1])
             await self.bot.change_presence(activity=newActivity)
-            await asyncio.sleep(20)
+            await asyncio.sleep(STATUS_TIMER.total_seconds())
     
 
     @Cog.listener()

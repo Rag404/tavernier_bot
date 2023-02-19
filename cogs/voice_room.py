@@ -205,7 +205,7 @@ class VoiceRoom(Cog):
         if before.id == self.bot.user.id:
             return  # If the event was called by the bot itself
         
-        if (room := get_member_room(after)) and room.auto_name:
+        if (room := get_member_room(after)) and room.auto_name and room.leader.id == after.id:
             # If the member who called this event is a room leader and if its room has auto-naming enabled
             old = room.channel.name
             if new := await room.rename_to_game(after):

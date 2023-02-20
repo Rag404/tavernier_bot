@@ -37,11 +37,17 @@ class Room:
         return col.update_one({"_id": self.channel.id}, {"$set": data}, upsert=True)
     
     
+    def unregister(self):
+        """Remove the room from the database"""
+        return col.delete_one({"_id": self.channel.id})
+    
+    
     async def delete(self, reason: str = None):
         """Delete the room"""
         
+        result = self.unregister()
         await self.channel.delete(reason=reason)
-        return col.delete_one({"_id": self.channel.id})
+        return result
     
     
     async def delete_after(self, delay: timedelta, reason: str = None):
@@ -85,6 +91,7 @@ class Room:
         """Change leader to the first member to have joined the room"""
         
         self.leader = self.members()[0]
+        self.commit()
         log(self.leader, f'is the new leader of the room "{self.channel.name}"')
         return self.leader
 
@@ -217,7 +224,8 @@ class VoiceRoom(Cog):
         if getattr(channel.category, "id", 0) != ROOMS_CATEGORY:
             return
         
-        log(f'The room "{channel.name}" has been manually deleted')
+        if room := get_room(channel):
+            room.unregister()
 
 
     room_commands = SlashCommandGroup("room", "Gérez votre room")

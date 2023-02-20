@@ -14,7 +14,7 @@ tasks = {}
 
 
 class Room:
-    def __init__(self, channel: VoiceChannel, leader: Member, locked: bool = False, auto_name: bool = True) -> None:
+    def __init__(self, channel: VoiceChannel, leader: Member, locked: bool = False, auto_name: bool = True):
         self.channel = channel
         """The dicord.VoiceChannel object"""
         
@@ -69,7 +69,7 @@ class Room:
     
     def count(self) -> bool:
         """Return the number of users connected (ignore bots)"""
-        return len(self.members()) == 0
+        return len(self.members())
 
     
     async def rename_to_game(self, member: Member) -> Optional[str]:
@@ -106,12 +106,12 @@ def get_room(channel: VoiceChannel) -> Optional[Room]:
 def get_member_room(member: Member) -> Optional[Room]:
     """Get the room where a member is connected, `None` if not found"""
     
-    if member.voice and member.voice.channel:
+    if getattr(member.voice, "channel", False):
         return get_room(member.voice.channel)
 
 
 def is_in_room(member: Member) -> bool:
-    return member.voice and member.voice.channel.category and member.voice.channel.category.id == ROOMS_CATEGORY
+    return getattr(member.voice.channel, "category", False) and member.voice.channel.category.id == ROOMS_CATEGORY
     
 
 def in_same_room(member_A: Member, member_B: Member):
@@ -177,13 +177,13 @@ class VoiceRoom(Cog):
                 room = await create_room(member)
                 return await room.begin_alone_cooldown()
             
-            elif channel.category.id == ROOMS_CATEGORY:
+            elif getattr(channel.category, "id", 0) == ROOMS_CATEGORY:
                 #If the member count in the room went from 1 to higher, cancel the cooldown for deleting the room
                 stop_alone_cooldown(channel.id)
         
         if before.channel != after.channel and (room := get_room(before.channel)):
-            if room.count() == 1:
-                # If there was 1 member left BEFORE leaving
+            if room.count() == 0:
+                # If the room is now empty
                 try:
                     await room.delete(reason="Room vide")
                     log(f'The room "{room.channel.name}" has been deserted')
@@ -195,8 +195,8 @@ class VoiceRoom(Cog):
                 await room.channel.send(f"L'ancien leader a quitté, le nouveau leader est {new_leader.mention}")
                 await room.rename_to_game(new_leader)
 
-            if room.count() == 2:
-                # If there were 2 members left BEFORE leaving
+            if room.count() == 1:
+                # If there is now 1 member left
                 await room.begin_alone_cooldown()
 
 
@@ -208,20 +208,16 @@ class VoiceRoom(Cog):
         if (room := get_member_room(after)) and room.auto_name and room.leader.id == after.id:
             # If the member who called this event is a room leader and if its room has auto-naming enabled
             old = room.channel.name
-            if new := await room.rename_to_game(after):
+            if None != (new := await room.rename_to_game(after)) != old:
                 log(f'The room "{old}" has been auto-renamed to "{new}"')
 
 
     @Cog.listener()
     async def on_guild_channel_delete(self, channel: VoiceChannel):
-        if channel.category and channel.category.id != ROOMS_CATEGORY:
+        if getattr(channel.category, "id", 0) != ROOMS_CATEGORY:
             return
         
-        try:
-            await get_room(channel).delete()
-            log(f'The room "{channel.name}" has been manually deleted')
-        except:
-            pass
+        log(f'The room "{channel.name}" has been manually deleted')
 
 
     room_commands = SlashCommandGroup("room", "Gérez votre room")
@@ -340,7 +336,7 @@ class VoiceRoom(Cog):
         
         await room.channel.set_permissions(member, connect=False, send_messages=False, reason="A été banni d'une room")
         
-        if member.voice and member.voice.channel.id == room.channel.id:
+        if getattr(member.voice.channel, "id", 0) == room.channel.id:
             await member.move_to(None)
         
         log(ctx.author, "has blacklisted", member, f'in the room "{room.channel.name}"')

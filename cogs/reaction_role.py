@@ -232,7 +232,7 @@ class ReactionRoleCog(Cog):
     async def name_autocomplete(ctx: AutocompleteContext) -> list[str]:
         return [rr.name for rr in reaction_roles]
     
-    async def existing_choices(ctx: AutocompleteContext) -> list[str]:
+    async def choices_autocomplete(ctx: AutocompleteContext) -> list[str]:
         picked_rr = get_by_name(reaction_roles, ctx.options["name"])
         return [choice.role.name for choice in picked_rr.choices]
     
@@ -320,8 +320,8 @@ class ReactionRoleCog(Cog):
     
     
     @rr_commands.command(name='remove-role')
-    @option("name", description="Le réaction-rôle à éditer", autocomplete=existing_choices)
-    @option("choice", description="Le choix à retirer au réaction-rôle")
+    @option("name", description="Le réaction-rôle à éditer", autocomplete=name_autocomplete)
+    @option("choice", description="Le choix à retirer au réaction-rôle", autocomplete=choices_autocomplete)
     async def remove_role_in_rr(self, ctx: ApplicationContext, name: str, choice: str):
         """Retire un rôle à un réaction-rôle"""
         

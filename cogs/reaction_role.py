@@ -233,11 +233,11 @@ class ReactionRoleCog(Cog):
 
             for choice in reac_role.choices:
                 # Remove the role associated to the emoji (longer code because on_raw_reaction_remove() only provides the member id in the payload)
-                if choice.emoji in (payload.emoji.id, payload.emoji.name):
+                if emoji_id(choice.emoji) in (payload.emoji.id, payload.emoji.name):
                     guild = self.bot.get_guild(payload.guild_id)
                     member = guild.get_member(payload.user_id)
                     await member.remove_roles(choice.role)
-                    log(f'"{choice.role.name}" given to {payload.member} by the reaction-role "{reac_role.name}"')
+                    log(f'"{choice.role.name}" removed from {member} by the reaction-role "{reac_role.name}"')
                     break
 
     

@@ -135,6 +135,18 @@ def get_by_name(rr_list: list[ReactionRole], name: str) -> ReactionRole:
             return reac_role
 
 
+def emoji_id(emoji: Union[Emoji, str]) -> Union[int, str, None]:
+    """Return the emoji's ID if it is an :class:`Emoji` object, or the emoji itself if it is an :class:`str` object"""
+    
+    if isinstance(emoji, Emoji):
+        return emoji.id
+    
+    elif isinstance(emoji, str):
+        return emoji
+    
+    return None
+
+
 
 class ReactionRoleCog(Cog):
     """Recevoir un role avec une réaction"""
@@ -200,7 +212,7 @@ class ReactionRoleCog(Cog):
             # Loop in the emojis of the rr in the json data
             for choice in reac_role.choices:
                 # Give the role associated to the emoji
-                if choice.emoji in (payload.emoji.id, payload.emoji.name):
+                if emoji_id(choice.emoji) in (payload.emoji.id, payload.emoji.name):
                     await payload.member.add_roles(choice.role)
                     log(f'"{choice.role.name}" given to {payload.member} by the reaction-role "{reac_role.name}"')
                     break
@@ -294,7 +306,7 @@ class ReactionRoleCog(Cog):
     @rr_commands.command(name='new-role')
     @option("name", description="Le réaction-rôle à éditer", autocomplete=name_autocomplete)
     @option("role", description="Le rôle à ajouter au réaction-rôle")
-    @option("emoji", description="L'emoji qui sera associé au rôle")
+    @option("emoji", description="L'emoji qui sera associé au rôle. DOIT ÊTRE UN EMOJI CUSTOM !")
     @option("description", description="Le texte qui sera affiché dans le réaction-rôle", required=False)
     async def new_role_in_rr(self, ctx: ApplicationContext, name: str, role: Role, emoji: Emoji, description: str):
         """Ajoute un rôle à un réaction-rôle"""

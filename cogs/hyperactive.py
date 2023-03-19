@@ -1,5 +1,5 @@
 from discord import Cog, Bot, Member, VoiceState, ApplicationContext, Embed, Color, slash_command, user_command, option
-from data.config import HYPERACTIVE_DB_COLLECTION, HYPERACTIVE_WEEK_DAY, HYPERACTIVE_LEVELS, HYPERACTIVE_ROLES, REDIRECT_VOICE_CHANNEL
+from data.config import HYPERACTIVE_DB_COLLECTION, HYPERACTIVE_WEEK_DAY, HYPERACTIVE_LEVELS, HYPERACTIVE_ROLES, REDIRECT_VOICE_CHANNEL, TAVERN_ID
 from resources.database import database
 from resources.utils import time2str
 import datetime as dt
@@ -53,8 +53,9 @@ class MemberData:
     def new_level(self) -> int:
         """Returns the new level of the member based on his time and current level"""
         
-        if (diff := (self.now - self.last)) >= dt.timedelta(days=7):
-            # If the member last connected a week ago or more, subtract the right amount of levels
+        diff = streak_day(self.now) - self.last
+        if diff > dt.timedelta(days=7):
+            # If the member last connected more than a week ago, subtract the right amount of levels
             weeks = diff // dt.timedelta(days=7)
             return max(0, self.level - weeks)
         
@@ -89,14 +90,13 @@ class MemberData:
     
     
     async def update_role(self):
-        if (new_level := self.new_level()) == self.level:
-            return
+        new_role = self.member.guild.get_role(HYPERACTIVE_ROLES[self.new_level()])
         
-        if old_role := self.member.guild.get_role(HYPERACTIVE_ROLES[self.level]):
-            await self.member.remove_roles(old_role)
+        for role in self.member.roles:
+            if role.id in HYPERACTIVE_ROLES:
+                await self.member.remove_roles(role)
         
-        if new_role := self.member.guild.get_role(HYPERACTIVE_ROLES[new_level]):
-            await self.member.add_roles(new_role)
+        await self.member.add_roles(new_role)
 
 
     async def handle_midnight(self):
@@ -126,6 +126,7 @@ def streak_day(now: dt.date) -> dt.datetime:
     day = now - dt.timedelta(days=days)
     full = dt.datetime.combine(day, dt.time())
     return full
+
 
 
 class Hyperactive(Cog):
@@ -163,7 +164,7 @@ class Hyperactive(Cog):
     
     @slash_command(name="stats")
     @option("user", Member, description="Le membre à qui afficher les stats (vous-même par défaut)", required=False)
-    async def show_stats(self, ctx: ApplicationContext, user: Member):
+    async def stats_cmd(self, ctx: ApplicationContext, user: Member):
         """Montre tes statistiques, ou celles d'un autre membre"""
         
         await ctx.defer()
@@ -192,7 +193,7 @@ class Hyperactive(Cog):
     
     
     @user_command(name="Statistiques")
-    async def show_stats_user(self, ctx, user):
+    async def stats_user_cmd(self, ctx, user):
         await self.show_stats(ctx, user)
 
 

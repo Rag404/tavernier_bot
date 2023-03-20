@@ -201,7 +201,7 @@ class Hyperactive(Cog):
     
     @user_command(name="Statistiques")
     async def stats_user_cmd(self, ctx, user):
-        await self.show_stats(ctx, user)
+        await self.stats_cmd(ctx, user)
 
 
 

@@ -71,6 +71,12 @@ class MemberData:
             return self.level
     
     
+    def display_level(self) -> int:
+        """Return the display display level, which is the higher value between `self.level` and `self.new_level()`"""
+        
+        return max(self.level, self.new_level())
+    
+    
     def time_str(self) -> str:
         """Format member's time values into string"""
         
@@ -90,13 +96,17 @@ class MemberData:
     
     
     async def update_role(self):
-        new_role = self.member.guild.get_role(HYPERACTIVE_ROLES[self.new_level()])
+        new_role = self.member.guild.get_role(HYPERACTIVE_ROLES[self.display_level()])
+        print("Plan to add role", new_role)
         
         for role in self.member.roles:
             if role.id in HYPERACTIVE_ROLES:
                 await self.member.remove_roles(role)
+                print("    Removed role", role)
         
-        await self.member.add_roles(new_role)
+        if new_role:
+            await self.member.add_roles(new_role)
+            print("    Role added")
 
 
     async def handle_midnight(self):
@@ -185,7 +195,7 @@ class Hyperactive(Cog):
         embed.add_field(
             name = "⚡ Activité",
             value = f"**{data.time_str()}** en vocal cette semaine\n" +
-                    f"**Niveau {max(data.level, data.new_level())}** d'hyperactivité",
+                    f"**Niveau {data.display_level()}** d'hyperactivité",
             inline = False
         )
         

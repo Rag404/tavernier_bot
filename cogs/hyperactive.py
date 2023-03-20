@@ -97,16 +97,13 @@ class MemberData:
     
     async def update_role(self):
         new_role = self.member.guild.get_role(HYPERACTIVE_ROLES[self.display_level()])
-        print("Plan to add role", new_role)
         
         for role in self.member.roles:
             if role.id in HYPERACTIVE_ROLES:
                 await self.member.remove_roles(role)
-                print("    Removed role", role)
         
         if new_role:
             await self.member.add_roles(new_role)
-            print("    Role added")
 
 
     async def handle_midnight(self):

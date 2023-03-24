@@ -2,7 +2,7 @@ from discord import Cog, Bot, Member, VoiceState, ApplicationContext, Embed, Col
 from discord.ext.tasks import loop
 from data.config import HYPERACTIVE_DB_COLLECTION, HYPERACTIVE_WEEK_DAY, HYPERACTIVE_LEVELS, HYPERACTIVE_ROLES, REDIRECT_VOICE_CHANNEL, LEADERBOARD_CHANNEL, LEADERBOARD_LIMIT
 from resources.database import database
-from resources.utils import streak_day, time2str, wait_until
+from resources.utils import time2str, wait_until
 import datetime as dt
 import pytz
 

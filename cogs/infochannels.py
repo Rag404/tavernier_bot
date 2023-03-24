@@ -87,9 +87,10 @@ class OnlineCount(Cog):
 
 def setup(bot):
     bot.add_cog(MemberCount(bot))
-    print(' - MemberCount')
+    print(" - Infochannels")
+    print("    + MemberCount")
     bot.add_cog(OnlineCount(bot))
-    print(' - OnlineCount')
+    print("    + OnlineCount")
 
 def on_teardown(bot):
     OnlineCount.online_count_loop.cancel()

@@ -1,18 +1,19 @@
 from discord import Cog, Bot, Member, VoiceState, ApplicationContext, Embed, Color, slash_command, user_command, option
-from data.config import HYPERACTIVE_DB_COLLECTION, HYPERACTIVE_WEEK_DAY, HYPERACTIVE_LEVELS, HYPERACTIVE_ROLES, REDIRECT_VOICE_CHANNEL, TAVERN_ID
+from discord.ext.tasks import loop
+from data.config import HYPERACTIVE_DB_COLLECTION, HYPERACTIVE_WEEK_DAY, HYPERACTIVE_LEVELS, HYPERACTIVE_ROLES, REDIRECT_VOICE_CHANNEL, LEADERBOARD_CHANNEL, LEADERBOARD_LIMIT
 from resources.database import database
-from resources.utils import time2str
+from resources.utils import streak_day, time2str, wait_until
 import datetime as dt
+import pytz
 
 
 col = database.get_collection(HYPERACTIVE_DB_COLLECTION)
 
 
-class MemberData:
-    def __init__(self, member: Member, level: int = 0, time: float = 0, last: float = 0):
+class BaseMemberData:
+    def __init__(self, member: int, level: int = 0, time: float = 0, last: float = 0):
         self.member = member
-        """The `discord.Member` object"""
-        
+        """The ID of the discord member"""
         self.level = level
         """The hyperactive level the member has reached"""
         self.time = dt.timedelta(hours=time)
@@ -24,17 +25,6 @@ class MemberData:
         """Time when the object was created"""
     
     
-    def commit(self):
-        """Push member data into the database"""
-        
-        data = {
-            "level": self.level,
-            "time": self.time / dt.timedelta(hours=1),  # Convert into hours
-            "last": self.last.timestamp()
-        }
-        col.update_one({"_id": self.member.id}, {"$set": data}, upsert=True)
-
-
     def expired(self) -> bool:
         """Check if a member has exceeded the time limit to increase his level. Return False if the member is new"""
 
@@ -42,8 +32,8 @@ class MemberData:
             return False
         
         return streak_day(self.now) >= self.last
-
-
+    
+    
     def reached(self) -> bool:
         """Check if a member has the time needed to reach the next level"""
         
@@ -86,14 +76,31 @@ class MemberData:
         return time2str(self.time)
     
     
-    async def update_time(self):
+    def update_time(self):
         """Add the time spent between now and the connection of a member to his progress"""
 
         self.time += self.now - self.last
+
+
+
+class MemberData(BaseMemberData):
+    def __init__(self, member: Member, level: int = 0, time: float = 0, last: float = 0):
+        super().__init__(level, time, last)
         
-        if self.reached():
-            await self.update_role()
+        self.member = member
+        """The `discord.Member` object"""
     
+    
+    def commit(self):
+        """Push member data into the database"""
+        
+        data = {
+            "level": self.level,
+            "time": self.time / dt.timedelta(hours=1),  # Convert into hours
+            "last": self.last.timestamp()
+        }
+        col.update_one({"_id": self.member.id}, {"$set": data}, upsert=True)
+
     
     async def update_role(self):
         new_role = self.member.guild.get_role(HYPERACTIVE_ROLES[self.display_level()])
@@ -119,6 +126,10 @@ class MemberData:
 
 
 
+# - - - - - - - - - - - Hyperactive Roles - - - - - - - - - - -
+
+
+
 def get_data(member: Member) -> MemberData:
     """Get a member's data from the database"""
     
@@ -126,9 +137,9 @@ def get_data(member: Member) -> MemberData:
     return MemberData(member, **result)
 
 
-def streak_day(now: dt.date) -> dt.datetime:
+def streak_day(now: dt.date = None) -> dt.datetime:
     """Return a datetime object for the last weekly streak update relative to a given date"""
-
+    
     days = abs(HYPERACTIVE_WEEK_DAY - now.weekday())
     day = now - dt.timedelta(days=days)
     full = dt.datetime.combine(day, dt.time())
@@ -148,25 +159,27 @@ class Hyperactive(Cog):
         if member.bot or (before.channel and before.channel.id == REDIRECT_VOICE_CHANNEL):
             return
         
-        memberdata = get_data(member)
+        member_data = get_data(member)
         
         # When a channel is left
-        if before.channel:
-            if after.channel and before.channel == after.channel:
-                return
-            
-            if memberdata.expired():
-                await memberdata.handle_midnight()
+        if before.channel and before.channel != after.channel:
+            if member_data.expired():
+                # Handle the case where a member connected before and left after midnight on reset day
+                await member_data.handle_midnight()
             else:
-                await memberdata.update_time()
+                member_data.update_time()
+                
+            if member_data.reached():
+                await member_data.update_role()
         
-        elif memberdata.expired():
-            memberdata.level = memberdata.new_level()
-            memberdata.time = dt.timedelta(0)
-            await memberdata.update_role()
-        
-        memberdata.last = memberdata.now
-        memberdata.commit()
+        # Or if the member last connected last week
+        elif member_data.expired():
+            member_data.level = member_data.new_level()
+            member_data.time = dt.timedelta(0)
+            await member_data.update_role()
+
+        member_data.last = member_data.now
+        member_data.commit()
     
     
     @slash_command(name="stats")
@@ -205,6 +218,94 @@ class Hyperactive(Cog):
 
 
 
+# - - - - - - - - - - - Leaderboard - - - - - - - - - - -
+
+
+def get_rankings() -> list[list[BaseMemberData]]:
+    rankings: list[list[BaseMemberData]] = []
+    
+    for result in col.find():
+        id = result.pop("_id")
+        member_data = BaseMemberData(id, **result)
+        
+        if member_data.time == 0 or (streak_day(member_data.now) - member_data.last) > dt.timedelta(weeks=1):
+            continue
+        
+        for i, rank in enumerate(rankings):
+            if member_data.time == rank[0].time:
+                rankings[i].append(member_data)
+                break
+            elif member_data.time > rank[0].time:
+                rankings.insert(i, [member_data])
+                break
+        else:
+            rankings.append([member_data])
+    
+    return rankings
+
+
+def rank_emoji(rank: int) -> str:
+    if rank == 1:
+        return "🏆"
+    elif rank == 2:
+        return "🥈"
+    elif rank == 3:
+        return "🥉"
+    else:
+        return "#" + str(rank)
+
+
+def leaderboard_embed(rank_limit: int) -> Embed:
+    """Return a Discord embed with the hyperactive leaderboard of the server"""
+    
+    rankings_list = get_rankings()
+    embed = Embed(
+        title = "Classement d'activité",
+        description = "Voici les membres les plus actifs en vocal sur la Taverne cette semaine.\nPetit rappel : pensez à vous hydrater et à toucher de l'herbe ;)\n\n",
+        color = Color.gold()
+    )
+    
+    for i, rank in enumerate(rankings_list):
+        for member_data in rank:
+            embed.description += f"{rank_emoji(i+1)} - <@{member_data.member}> **{time2str(member_data.time)}** (niveau {member_data.level})\n"
+        
+        if i >= rank_limit:
+            break
+    
+    return embed
+
+
+
+class Leaderboard(Cog):
+    """Classement des membres les plus actifs"""
+    
+    def __init__(self, bot):
+        self.bot: Bot = bot
+    
+    
+    async def send_leaderboard(self):
+        channel = self.bot.get_channel(LEADERBOARD_CHANNEL)
+        embed = leaderboard_embed(LEADERBOARD_LIMIT)
+        await channel.send(embed=embed)
+    
+
+    @loop()
+    async def leaderboard_loop(self):
+        now = dt.datetime.now()
+        next = streak_day(now) + dt.timedelta(weeks=1, seconds=1)
+        await wait_until(next)
+        
+        await self.send_leaderboard()
+    
+    
+    @Cog.listener()
+    async def on_ready(self):
+        self.leaderboard_loop.start()
+
+
+
 def setup(bot: Bot):
     bot.add_cog(Hyperactive(bot))
     print(" - Hyperactive")
+    bot.add_cog(Leaderboard(bot))
+    print("    + Leaderboard")

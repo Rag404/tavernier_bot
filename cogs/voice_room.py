@@ -1,6 +1,6 @@
 from discord import Bot, CategoryChannel, Cog, Member, ActivityType, SlashCommandGroup, VoiceChannel, VoiceState, PermissionOverwrite, ApplicationContext, AllowedMentions, default_permissions, user_command, option
-from data.config import REDIRECT_VOICE_CHANNEL, ROOMS_CATEGORY, ROOMS_DB_COLLECTION, ROOM_LEADER_OVERWRITES, ROOM_ALONE_TIMER, BOT_ROLE, TIMEZONE
 from discord.utils import get
+from data.config import REDIRECT_VOICE_CHANNEL, ROOMS_CATEGORY, ROOMS_DB_COLLECTION, ROOM_LEADER_OVERWRITES, ROOM_ALONE_TIMER, BOT_ROLE, TIMEZONE
 from typing import Optional
 from resources.utils import log, time2str
 from resources.database import database
@@ -322,9 +322,9 @@ class VoiceRoom(Cog):
         if not room or ctx.channel != room.channel:
             return await ctx.respond("Vous devez être dans une room pour pouvoir en montrer les infos !", ephemeral=True)
         
-        STATES = {True: "\\✅", False: "\\❌"}
+        STATES = {True: "✅", False: "❌"}
         await ctx.respond(
-            f"Nom : {room.channel.name} \nLeader : {room.leader.mention} \nVerrouillée : {STATES[room.locked]} \nNom automatique : {STATES[room.auto_name]}",
+            f"Nom : {room.channel.name} \nLeader : {room.leader.mention} \nVerrouillée : \\{STATES[room.locked]} \nNom automatique : \\{STATES[room.auto_name]}",
             allowed_mentions = AllowedMentions(users=False)
         )
 

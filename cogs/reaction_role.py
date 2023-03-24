@@ -1,4 +1,4 @@
-from discord import ApplicationContext, AutocompleteContext, Bot, Cog, Emoji, Guild, Embed, Message, Permissions, RawReactionActionEvent, Role, SlashCommandGroup, TextChannel, option, slash_command
+from discord import ApplicationContext, AutocompleteContext, Bot, Cog, Emoji, Guild, Embed, Message, Permissions, RawReactionActionEvent, Role, SlashCommandGroup, TextChannel, option
 from discord.ext.commands import is_owner
 from data.config import REACTION_ROLES_PATH
 from typing import Union, Optional

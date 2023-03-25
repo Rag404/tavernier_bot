@@ -11,8 +11,8 @@ col = database.get_collection(HYPERACTIVE_DB_COLLECTION)
 
 
 class BaseMemberData:
-    def __init__(self, member: int, level: int = 0, time: float = 0, last: float = 0):
-        self.member = member
+    def __init__(self, member_id: int, level: int = 0, time: float = 0, last: float = 0):
+        self.member_id = member_id
         """The ID of the discord member"""
         self.level = level
         """The hyperactive level the member has reached"""
@@ -85,7 +85,7 @@ class BaseMemberData:
 
 class MemberData(BaseMemberData):
     def __init__(self, member: Member, level: int = 0, time: float = 0, last: float = 0):
-        super().__init__(level, time, last)
+        super().__init__(member.id, level, time, last)
         
         self.member = member
         """The `discord.Member` object"""

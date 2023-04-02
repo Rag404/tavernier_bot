@@ -1,10 +1,9 @@
-from discord import Cog, Bot, Member, VoiceState, ApplicationContext, Embed, Color, slash_command, user_command, option
+from discord import Cog, Bot, Member, VoiceState, ApplicationContext, Embed, Color, slash_command, user_command, option, default_permissions
 from discord.ext.tasks import loop
 from data.config import HYPERACTIVE_DB_COLLECTION, HYPERACTIVE_WEEK_DAY, HYPERACTIVE_LEVELS, HYPERACTIVE_ROLES, REDIRECT_VOICE_CHANNEL, LEADERBOARD_CHANNEL, LEADERBOARD_LIMIT
 from resources.database import database
 from resources.utils import time2str, wait_until
 import datetime as dt
-import pytz
 
 
 col = database.get_collection(HYPERACTIVE_DB_COLLECTION)
@@ -255,6 +254,21 @@ def rank_emoji(rank: int) -> str:
         return "#" + str(rank)
 
 
+def level_str(level: int) -> str:
+    if level == 0:
+        return ""
+    elif level == 1:
+        return "| niveau Ⅰ"
+    elif level == 2:
+        return "| niveau Ⅱ"
+    elif level == 3:
+        return "| niveau Ⅲ"
+    elif level == 4:
+        return "| niveau Ⅳ"
+    else:
+        return "| niveau Ⅴ"
+
+
 def leaderboard_embed(rank_limit: int) -> Embed:
     """Return a Discord embed with the hyperactive leaderboard of the server"""
     
@@ -267,7 +281,11 @@ def leaderboard_embed(rank_limit: int) -> Embed:
     
     for i, rank in enumerate(rankings_list):
         for member_data in rank:
-            embed.description += f"{rank_emoji(i+1)} - <@{member_data.member}> **{time2str(member_data.time)}** (niveau {member_data.level})\n"
+            prefix = rank_emoji(i+1)
+            mention = "<@" + str(member_data.member_id) + ">"
+            level = level_str(member_data.level)
+            time = time2str(member_data.time)
+            embed.description += f"{prefix} - {mention} | **{time}** {level}\n"
         
         if i >= rank_limit:
             break
@@ -301,6 +319,16 @@ class Leaderboard(Cog):
     @Cog.listener()
     async def on_ready(self):
         self.leaderboard_loop.start()
+    
+    
+    @slash_command(name="leaderboard")
+    @default_permissions(administrator=True)
+    @option("rank_limit", description="Nombre maximal de rangs à afficher (10 par défaut)", min_value=1)
+    async def leaderboard_cmd(self, ctx: ApplicationContext, rank_limit: int = 10):
+        """Affiche le classement des membres les plus actifs"""
+        
+        embed = leaderboard_embed(rank_limit)
+        await ctx.respond(embed=embed)
 
 
 

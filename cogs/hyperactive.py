@@ -1,9 +1,10 @@
 from discord import Cog, Bot, Member, VoiceState, ApplicationContext, Embed, Color, slash_command, user_command, option, default_permissions
 from discord.ext.tasks import loop
-from data.config import HYPERACTIVE_DB_COLLECTION, HYPERACTIVE_WEEK_DAY, HYPERACTIVE_LEVELS, HYPERACTIVE_ROLES, REDIRECT_VOICE_CHANNEL, LEADERBOARD_CHANNEL, LEADERBOARD_LIMIT
+from data.config import HYPERACTIVE_DB_COLLECTION, HYPERACTIVE_WEEK_DAY, HYPERACTIVE_LEVELS, HYPERACTIVE_ROLES, REDIRECT_VOICE_CHANNEL, LEADERBOARD_CHANNEL, LEADERBOARD_LIMIT, CONSOLE_CHANNEL
 from resources.database import database
 from resources.utils import time2str, wait_until
 import datetime as dt
+import json
 
 
 col = database.get_collection(HYPERACTIVE_DB_COLLECTION)
@@ -160,25 +161,46 @@ class Hyperactive(Cog):
         
         member_data = get_data(member)
         
+        logs = {}
+        logs["member"] = str(member)
+        logs["joined_or_left"] = "joined"
+        logs["expired"] = "no"
+        logs["last1"] = member_data.last.timestamp()
+        logs["time1"] = member_data.time / dt.timedelta(hours=1)
+        
         # When a channel is left
         if before.channel and before.channel != after.channel:
+            logs["joined_or_left"] = "left"
+            
             if member_data.expired():
                 # Handle the case where a member connected before and left after midnight on reset day
                 await member_data.handle_midnight()
+                logs["expired"] = "yes"
             else:
                 member_data.update_time()
                 
             if member_data.reached():
                 await member_data.update_role()
         
+        
         # Or if the member last connected last week
         elif member_data.expired():
             member_data.level = member_data.new_level()
             member_data.time = dt.timedelta(0)
             await member_data.update_role()
+            logs["expired"] = "yes"
 
+        logs["last2"] = member_data.last.timestamp()
+        logs["time2"] = member_data.time / dt.timedelta(hours=1)
+        
         member_data.last = member_data.now
         member_data.commit()
+        
+        logs["last3"] = member_data.last.timestamp()
+        logs["time3"] = member_data.time / dt.timedelta(hours=1)
+        
+        channel = self.bot.get_channel(CONSOLE_CHANNEL)
+        await channel.send("```json\n" + json.dumps(logs, indent=4) +"\n```")
     
     
     @slash_command(name="stats")

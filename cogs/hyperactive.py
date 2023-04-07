@@ -146,6 +146,27 @@ def streak_day(now: dt.date = None) -> dt.datetime:
     return full
 
 
+def false_alert(member: Member, before: VoiceState, after: VoiceState) -> bool:
+    """Return if an `on_voice_state_update` event has been triggered in unwanted circumstances"""
+    
+    checks = [
+        # If the member is a bot
+        member.bot,
+        # If the left and joined channel are both None
+        not before.channel and not after.channel,
+        # If the channel left is the redirect voice channel
+        getattr(before.channel, "id") == REDIRECT_VOICE_CHANNEL,
+        # If the channel left is the same as the channel joined
+        before.channel == after.channel
+    ]
+    
+    # If any of the checks passes, then it is a false alert
+    if any(checks):
+        return True
+    else:
+        return False
+
+
 
 class Hyperactive(Cog):
     """Rôle Hyperactif automatique"""
@@ -156,51 +177,31 @@ class Hyperactive(Cog):
     
     @Cog.listener()
     async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
-        if member.bot or (before.channel and before.channel.id == REDIRECT_VOICE_CHANNEL):
+        if false_alert(member, before, after):
+            print("false alert")
             return
         
         member_data = get_data(member)
         
-        logs = {}
-        logs["member"] = str(member)
-        logs["joined_or_left"] = "joined"
-        logs["expired"] = "no"
-        logs["last1"] = member_data.last.timestamp()
-        logs["time1"] = member_data.time / dt.timedelta(hours=1)
-        
         # When a channel is left
         if before.channel and before.channel != after.channel:
-            logs["joined_or_left"] = "left"
-            
             if member_data.expired():
                 # Handle the case where a member connected before and left after midnight on reset day
                 await member_data.handle_midnight()
-                logs["expired"] = "yes"
             else:
                 member_data.update_time()
                 
             if member_data.reached():
                 await member_data.update_role()
         
-        
         # Or if the member last connected last week
         elif member_data.expired():
             member_data.level = member_data.new_level()
             member_data.time = dt.timedelta(0)
             await member_data.update_role()
-            logs["expired"] = "yes"
-
-        logs["last2"] = member_data.last.timestamp()
-        logs["time2"] = member_data.time / dt.timedelta(hours=1)
         
         member_data.last = member_data.now
         member_data.commit()
-        
-        logs["last3"] = member_data.last.timestamp()
-        logs["time3"] = member_data.time / dt.timedelta(hours=1)
-        
-        channel = self.bot.get_channel(CONSOLE_CHANNEL)
-        await channel.send("```json\n" + json.dumps(logs, indent=4) +"\n```")
     
     
     @slash_command(name="stats")

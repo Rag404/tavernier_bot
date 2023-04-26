@@ -155,7 +155,7 @@ def false_alert(member: Member, before: VoiceState, after: VoiceState) -> bool:
         # If the left and joined channel are both None
         not before.channel and not after.channel,
         # If the channel left is the redirect voice channel
-        getattr(before.channel, "id") == REDIRECT_VOICE_CHANNEL,
+        getattr(before.channel, "id", None) == REDIRECT_VOICE_CHANNEL,
         # If the channel left is the same as the channel joined
         before.channel == after.channel
     ]

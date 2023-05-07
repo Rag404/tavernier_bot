@@ -60,7 +60,7 @@ class Room:
             pass
     
     
-    async def begin_alone_cooldown(self):
+    async def begin_alone_countdown(self):
         """Will delete the room in a certain amount of time"""
         
         tasks[str(self.channel.id)] = asyncio.create_task(self.delete_after(ROOM_ALONE_TIMER, "Membre connecté seul"))
@@ -98,7 +98,7 @@ class Room:
 
 
 def get_room(channel: VoiceChannel) -> Optional[Room]:
-    """Get a room's data by its id, `None` if not found"""
+    """Get a room's, `None` if not found"""
     
     if not channel:
         return
@@ -155,8 +155,8 @@ async def create_room(leader: Member) -> Room:
     return room
 
     
-def stop_alone_cooldown(id: int):
-    """Stop the cooldown called with `Room.begin_alone_cooldown()` for a given room ID"""
+def stop_alone_countdown(id: int):
+    """Stop the countdown called with `Room.begin_alone_countdown()` for a given room ID"""
     
     try:
         tasks[str(id)].cancel()
@@ -182,13 +182,14 @@ class VoiceRoom(Cog):
         if (channel := after.channel):
             if channel.id == REDIRECT_VOICE_CHANNEL:
                 room = await create_room(member)
-                return await room.begin_alone_cooldown()
+                await room.begin_alone_countdown()
             
             elif getattr(channel.category, "id", 0) == ROOMS_CATEGORY:
-                #If the member count in the room went from 1 to higher, cancel the cooldown for deleting the room
-                stop_alone_cooldown(channel.id)
+                #If the member count in the room went from 1 to higher, cancel the countdown for deleting the room
+                stop_alone_countdown(channel.id)
         
         if before.channel != after.channel and (room := get_room(before.channel)):
+            
             if room.count() == 0:
                 # If the room is now empty
                 try:
@@ -204,7 +205,7 @@ class VoiceRoom(Cog):
 
             if room.count() == 1:
                 # If there is now 1 member left
-                await room.begin_alone_cooldown()
+                await room.begin_alone_countdown()
 
 
     @Cog.listener()

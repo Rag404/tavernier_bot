@@ -178,7 +178,6 @@ class Hyperactive(Cog):
     @Cog.listener()
     async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
         if false_alert(member, before, after):
-            print("false alert")
             return
         
         member_data = get_data(member)

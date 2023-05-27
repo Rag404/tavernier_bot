@@ -20,7 +20,7 @@ BOT_EXTENSIONS = [
     "infochannels",
     "welcome",
     "status",
-    "reaction_role",
+    # "reaction_role",  Deprecated since Discord made their own role picker
     "utilities",
     "voice_room",
     "error_handling",

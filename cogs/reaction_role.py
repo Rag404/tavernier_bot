@@ -7,6 +7,10 @@ import json
 
 
 
+# - - - - This cog is deprecated since Discord made their own role picker - - - - #
+
+
+
 class ReactionChoice:
     def __init__(self, name: str, role: Role, emoji: Union[Emoji, str], label: Optional[str] = None) -> None:
         self.name = name

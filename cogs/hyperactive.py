@@ -214,10 +214,10 @@ class Hyperactive(Cog):
         member = data.member
         
         embed = Embed(
-            title = f"Statistiques de {member}",
+            title = f"Statistiques de @{member.name}",
             color = Color.embed_background()
         )
-        embed.set_thumbnail(url=member.avatar.url + "?size=1024")
+        
         embed.add_field(
             name = "⏱️ Ancienneté",
             value = f"Compte créé le <t:{int(member.created_at.timestamp())}:D>\n" +
@@ -229,6 +229,11 @@ class Hyperactive(Cog):
                     f"**Niveau {data.display_level()}** d'hyperactivité",
             inline = False
         )
+        
+        if member.avatar:
+            embed.set_thumbnail(url=member.avatar.url + "?size=1024")
+        else:
+            embed.set_thumbnail(url=member.default_avatar)
         
         await ctx.respond(embed=embed)
     
@@ -254,7 +259,7 @@ def get_rankings() -> list[list[BaseMemberData]]:
         
         for i, rank in enumerate(rankings):
             if member_data.time == rank[0].time:
-                rankings[i].append(member_data)
+                rankings[i].append(mmber_data)
                 break
             elif member_data.time > rank[0].time:
                 rankings.insert(i, [member_data])

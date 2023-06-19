@@ -259,7 +259,7 @@ def get_rankings() -> list[list[BaseMemberData]]:
         
         for i, rank in enumerate(rankings):
             if member_data.time == rank[0].time:
-                rankings[i].append(mmber_data)
+                rankings[i].append(member_data)
                 break
             elif member_data.time > rank[0].time:
                 rankings.insert(i, [member_data])
@@ -307,15 +307,15 @@ def leaderboard_embed(rank_limit: int) -> Embed:
     )
     
     for i, rank in enumerate(rankings_list):
+        if i >= rank_limit:
+            break
+        
         for member_data in rank:
             prefix = rank_emoji(i+1)
             mention = "<@" + str(member_data.member_id) + ">"
             level = level_str(member_data.level)
             time = time2str(member_data.time)
             embed.description += f"{prefix} - {mention} | **{time}** {level}\n"
-        
-        if i >= rank_limit:
-            break
     
     return embed
 

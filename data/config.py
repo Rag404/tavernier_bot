@@ -1,7 +1,7 @@
 import discord
 from datetime import timedelta
 
-# Dirty way to get the root directory (removes '\data\config.py' at the end of the str)
+# Dirty way to get the root directory (removes "\data\config.py" at the end of the str)
 root_path = __file__[:-15]
 
 
@@ -35,27 +35,27 @@ MEMBERS_INFOCHANNEL = 1046480685059280896
 ONLINES_INFOCHANNEL = 963536054621716520
 
 # Reaction-roles
-REACTION_ROLES_PATH = root_path + '/data/reaction_roles.json'
+REACTION_ROLES_PATH = root_path + "/data/reaction_roles.json"
 
 # Status
 STATUS_TIMER      = timedelta(seconds=20)
-ANIMES_PATH       = root_path + '/data/status/animes.txt'
-MUSIC_GENRES_PATH = root_path + '/data/status/music_genres.txt'
-VIDEO_GAMES_PATH  = root_path + '/data/status/video_games.txt'
-MOVIES_PATH       = root_path + '/data/status/movies.txt'
+ANIMES_PATH       = root_path + "/data/status/animes.txt"
+MUSIC_GENRES_PATH = root_path + "/data/status/music_genres.txt"
+VIDEO_GAMES_PATH  = root_path + "/data/status/video_games.txt"
+MOVIES_PATH       = root_path + "/data/status/movies.txt"
 
 # Voice rooms
 REDIRECT_VOICE_CHANNEL = 996160558371979355
 ROOMS_CATEGORY         = 996159603324768276
-ROOMS_DB_COLLECTION    = 'rooms'
-ROOM_LEADER_OVERWRITES = discord.PermissionOverwrite(manage_channels=True, manage_permissions=True, move_members=True, mute_members=True, deafen_members=True, manage_events=True)
+ROOMS_DB_COLLECTION    = "rooms"
+ROOM_LEADER_OVERWRITES = discord.PermissionOverwrite(manage_channels=True, manage_permissions=True, move_members=True, manage_messages=True)
 ROOM_ALONE_TIMER       = timedelta(minutes=5)
 
 # Welcome
 WELCOME_CHANNEL = 807900462794932236
 
 # Hyperactive role & leaderboard
-HYPERACTIVE_DB_COLLECTION = 'hyperactive'
+HYPERACTIVE_DB_COLLECTION = "hyperactive"
 HYPERACTIVE_WEEK_DAY      = 0  # 0 Monday, 1 Tuesday ... 6 Sunday
 HYPERACTIVE_LEVELS = [
     timedelta(0),        # Level 0

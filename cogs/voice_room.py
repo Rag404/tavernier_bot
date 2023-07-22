@@ -66,16 +66,6 @@ class Room:
         tasks[str(self.channel.id)] = asyncio.create_task(self.delete_after(ROOM_ALONE_TIMER, "Membre connecté seul"))
         timestamp = int((datetime.now(timezone(TIMEZONE)) + ROOM_ALONE_TIMER).timestamp())
         await self.channel.send(f"Cette room sera supprimée si personne ne rejoint dans **{time2str(ROOM_ALONE_TIMER)}** (<t:{timestamp}:R>)")
-    
-    
-    def members(self) -> list[Member]:
-        """Get a list of members in the room, excluding bots"""
-        return [m for m in self.channel.members if not m.bot]
-    
-    
-    def count(self) -> bool:
-        """Return the number of users connected (ignore bots)"""
-        return len(self.members())
 
     
     async def rename_to_game(self, member: Member) -> Optional[str]:
@@ -86,14 +76,49 @@ class Room:
             await self.channel.edit(name=game, reason="Le chef de la room a changé de jeu")
         return game
 
-
-    def change_leader(self) -> Member:
+    
+    async def change_leader(self, new_leader: Member, reset_overwrites=False) -> Member:
+        """Change leader to the given member"""
+        
+        old_leader = self.leader
+        self.leader = new_leader
+        self.commit()
+        
+        if reset_overwrites or not self.locked:
+            await self.channel.set_permissions(old_leader, None)
+        else:
+            await self.channel.set_permissions(old_leader, connect=True)
+        
+        await self.channel.set_permissions(new_leader, ROOM_LEADER_OVERWRITES)
+        
+        if self.auto_name:
+            await self.rename_to_game(new_leader)
+        
+        log(new_leader, f'is the new leader of the room "{self.channel.name}"')
+        return new_leader
+        
+    
+    async def auto_change_leader(self) -> Member:
         """Change leader to the first member to have joined the room"""
         
-        self.leader = self.members()[0]
-        self.commit()
-        log(self.leader, f'is the new leader of the room "{self.channel.name}"')
-        return self.leader
+        return await self.change_leader(self.members()[0], reset_overwrites=True)
+    
+    
+    def members(self) -> list[Member]:
+        """Get a list of members in the room, excluding bots"""
+        return [m for m in self.channel.members if not m.bot]
+    
+    
+    def count(self) -> bool:
+        """Return the number of users connected, excluding bots"""
+        return len(self.members())
+    
+    
+    def format_infos(self) -> str:
+        """Return the room's infos as a formatted string"""
+        
+        STATES = {True: "✅", False: "❌"}
+        return f"Nom : {self.channel.name} \nLeader : {self.leader.mention} \nVerrouillée : \\{STATES[self.locked]} \nNom automatique : \\{STATES[self.auto_name]}"
 
 
 
@@ -199,9 +224,8 @@ class VoiceRoom(Cog):
                     pass
             
             elif member == room.leader:
-                new_leader = room.change_leader()
+                new_leader = await room.auto_change_leader()
                 await room.channel.send(f"L'ancien leader a quitté, le nouveau leader est {new_leader.mention}")
-                await room.rename_to_game(new_leader)
 
             if room.count() == 1:
                 # If there is now 1 member left
@@ -324,10 +348,7 @@ class VoiceRoom(Cog):
             return await ctx.respond("Vous devez être dans une room pour pouvoir en montrer les infos !", ephemeral=True)
         
         STATES = {True: "✅", False: "❌"}
-        await ctx.respond(
-            f"Nom : {room.channel.name} \nLeader : {room.leader.mention} \nVerrouillée : \\{STATES[room.locked]} \nNom automatique : \\{STATES[room.auto_name]}",
-            allowed_mentions = AllowedMentions(users=False)
-        )
+        await ctx.respond(room.format_infos(), allowed_mentions=AllowedMentions(users=False))
 
 
     @room_commands.command(name="blacklist")
@@ -371,7 +392,7 @@ class VoiceRoom(Cog):
     @room_commands.command(name="leader")
     @option("member", description="Le membre à définir comme leader")
     async def set_room_leader(self, ctx: ApplicationContext, member: Member):
-        """Passer le lead de la room à un membre"""
+        """Passer le contrôle de la room à un membre"""
         
         room = get_member_room(ctx.author)
         
@@ -380,19 +401,7 @@ class VoiceRoom(Cog):
         if not in_same_room(ctx.author, member):
             return await ctx.respond("Ce membre n'est pas dans votre room !", ephemeral=True)
         
-        if room.locked:
-            await room.channel.set_permissions(ctx.author, connect=True)
-        else:
-            await room.channel.set_permissions(ctx.author, overwrite=None)
-        
-        await room.channel.set_permissions(member, overwrite=ROOM_LEADER_OVERWRITES)
-        room.leader = member
-        room.commit()
-        
-        if room.auto_name:
-            await room.rename_to_game(member)
-        
-        log(member, f'is the new leader of the room "{room.channel.name}"')
+        await room.change_leader(member)
         await ctx.respond(f"{member.mention} est le nouveau leader de la room.")
 
 

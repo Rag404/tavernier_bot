@@ -85,11 +85,11 @@ class Room:
         self.commit()
         
         if reset_overwrites or not self.locked:
-            await self.channel.set_permissions(old_leader, None)
+            await self.channel.set_permissions(old_leader, overwrite=None)
         else:
             await self.channel.set_permissions(old_leader, connect=True)
         
-        await self.channel.set_permissions(new_leader, ROOM_LEADER_OVERWRITES)
+        await self.channel.set_permissions(new_leader, overwrite=ROOM_LEADER_OVERWRITES)
         
         if self.auto_name:
             await self.rename_to_game(new_leader)

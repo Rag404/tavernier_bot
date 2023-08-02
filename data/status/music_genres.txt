@@ -1,6 +1,6 @@
 du baroque
 du blues
-du bossa nova
+de la bossa nova
 du celtique
 du classique
 de la chanson française
@@ -19,6 +19,7 @@ du hard style
 du house
 du jazz
 de la j-pop
+du j-rock
 de la k-pop
 du logobi
 du lo-fi
@@ -40,7 +41,7 @@ du swing
 de la synthwave
 de la techno
 de la trance
-du trap
+de la trap
 de la tribe
 du zouk
 de la zumba

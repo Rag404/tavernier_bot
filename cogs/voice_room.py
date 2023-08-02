@@ -303,7 +303,7 @@ class VoiceRoom(Cog):
 
 
     
-    async def lock_cmd(self, ctx: ApplicationContext, locked: bool):
+    async def set_lock(self, ctx: ApplicationContext, locked: bool):
         await ctx.defer()
         room = get_member_room(ctx.author)
         state = "verrouillée" if locked else "déverrouillée"
@@ -314,9 +314,16 @@ class VoiceRoom(Cog):
         if room.locked == locked:
             return await ctx.respond(f"La room est déjà {state}")
         
+        overwrites = room.channel.overwrites
+        overwrites[ctx.guild.default_role] = PermissionOverwrite(connect=False if locked else None)
+
         for member in room.members():
-            await room.channel.set_permissions(member, connect=locked, reason=f"La room a été {state} par {ctx.author}")
-        await room.channel.set_permissions(ctx.guild.default_role, connect=(not locked), reason=f"La room a été {state} par {ctx.author}")
+            if member in overwrites:
+                overwrites[member].connect = locked or None
+            else:
+                overwrites[member] = PermissionOverwrite(connect=locked or None)
+        
+        await room.channel.edit(overwrites=overwrites, reason=f"La room a été {state} par {ctx.author}")
         
         room.locked = locked
         room.commit()
@@ -326,15 +333,15 @@ class VoiceRoom(Cog):
 
 
     @room_commands.command(name="lock")
-    async def lock_room(self, ctx):
+    async def lock_room_cmd(self, ctx):
         """Verrouiller la room pour que seul les membres présents y aient accès"""
-        await self.lock_cmd(ctx, True)
+        await self.set_lock(ctx, True)
 
 
     @room_commands.command(name="unlock")
-    async def unlock_room(self, ctx):
+    async def unlock_room_cmd(self, ctx):
         """Déverrouiller la room pour que tout le monde puisse y entrer"""
-        await self.lock_cmd(ctx, False)
+        await self.set_lock(ctx, False)
     
     
     

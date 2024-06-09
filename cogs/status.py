@@ -24,10 +24,10 @@ movies = get_lines(MOVIES_PATH)
 
 class BotStatus(Cog):
     """Changement automatique du status"""
-    
+
     def __init__(self, bot):
         self.bot: Bot = bot
-    
+
 
     global status_loop
 
@@ -38,7 +38,7 @@ class BotStatus(Cog):
             newActivity = Activity(type=activity[0], name=activity[1])
             await self.bot.change_presence(activity=newActivity)
             await asyncio.sleep(STATUS_TIMER.total_seconds())
-    
+
 
     @Cog.listener()
     async def on_ready(self):
@@ -63,11 +63,11 @@ class BotStatus(Cog):
         ]
 
 
-def setup(bot):
+def setup(bot: Bot):
     bot.add_cog(BotStatus(bot))
     print(' - BotStatus')
 
 
-def teardown(bot):
+def teardown(bot: Bot):
     status_loop.cancel()
     print('status cog unloaded')

@@ -24,8 +24,8 @@ def unloaded(ctx: Union[ApplicationContext, AutocompleteContext]) -> list[str]:
 class ExtCommands(Cog):
     def __init__(self, bot):
         self.bot: Bot = bot
-    
-    
+
+
     ext_commands = SlashCommandGroup("extension", "Contrôler les extensions")
 
 
@@ -55,8 +55,8 @@ class ExtCommands(Cog):
         else:
             log(f'"{extension}" unloaded')
             await ctx.respond(f"`{extension}` is now unloaded")
-    
-    
+
+
     @ext_commands.command(name="reload")
     @default_permissions(administrator=True)
     @is_owner()
@@ -69,8 +69,8 @@ class ExtCommands(Cog):
         else:
             log(f'"{extension}" reloaded')
             await ctx.respond(f"`{extension}` has been reloaded")
-    
-    
+
+
     @ext_commands.command(name="list")
     @default_permissions(administrator=True)
     @is_owner()
@@ -85,9 +85,9 @@ class ExtCommands(Cog):
             value = ", ".join([f"`{e}`" for e in sorted(unloaded(ctx))]) or "aucune",
             inline = False
         )
-        
+
         await ctx.respond(embed=embed)
-        
+
 
 
 def setup(bot):

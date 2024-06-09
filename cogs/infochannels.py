@@ -33,7 +33,7 @@ class MemberCount(Cog):
     @Cog.listener()
     async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
         """Kick members entering the channel"""
-        
+
         if after.channel:
             if after.channel.id == MEMBERS_INFOCHANNEL:
                 await member.move_to(before.channel)
@@ -73,11 +73,11 @@ class OnlineCount(Cog):
     @Cog.listener()
     async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
         """Kick members entering the channel"""
-        
+
         if after.channel:
             if after.channel.id == ONLINES_INFOCHANNEL:
                 await member.move_to(before.channel)
-    
+
 
     @Cog.listener()
     async def on_ready(self):

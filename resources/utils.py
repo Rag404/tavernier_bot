@@ -12,7 +12,7 @@ def time2str(time: dt.timedelta):
     values = {}
     values["h"], r = divmod(round(time.total_seconds()), 3600)
     values["min"], values["s"] = divmod(r, 60)
-    
+
     return " ".join([str(v) + k for k, v in values.items() if v > 0]) or "0s"
 
 

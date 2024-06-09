@@ -1,6 +1,8 @@
+bot-env/
+.vscode/
+*__pycache__/
+test/
+
 .env
-bot-env
-*__pycache__
 _main.py
 reaction_roles_backup.json
-test

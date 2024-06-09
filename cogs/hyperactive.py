@@ -148,8 +148,8 @@ def streak_day(now: dt.date = None) -> dt.datetime:
 
 def false_alert(member: Member, before: VoiceState, after: VoiceState) -> bool:
     """Return if an `on_voice_state_update` event has been triggered in unwanted circumstances"""
-    
-    checks = [
+
+    return any([
         # If the member is a bot
         member.bot,
         # If the left and joined channel are both None
@@ -158,13 +158,7 @@ def false_alert(member: Member, before: VoiceState, after: VoiceState) -> bool:
         getattr(before.channel, "id", None) == REDIRECT_VOICE_CHANNEL,
         # If the channel left is the same as the channel joined
         before.channel == after.channel
-    ]
-    
-    # If any of the checks passes, then it is a false alert
-    if any(checks):
-        return True
-    else:
-        return False
+    ])
 
 
 
@@ -345,9 +339,10 @@ class Leaderboard(Cog):
     
     @Cog.listener()
     async def on_ready(self):
-        self.leaderboard_loop.start()
-    
-    
+        if not self.leaderboard_loop.is_running():
+            self.leaderboard_loop.start()
+
+
     @slash_command(name="leaderboard")
     @default_permissions(administrator=True)
     @option("rank_limit", description="Nombre maximal de rangs à afficher (10 par défaut)", min_value=1)

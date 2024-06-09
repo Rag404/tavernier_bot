@@ -81,7 +81,8 @@ class OnlineCount(Cog):
 
     @Cog.listener()
     async def on_ready(self):
-        self.online_count_loop.start()
+        if not self.online_count_loop.is_running():
+            self.online_count_loop.start()
 
 
 

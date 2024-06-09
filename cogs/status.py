@@ -42,7 +42,8 @@ class BotStatus(Cog):
 
     @Cog.listener()
     async def on_ready(self):
-        status_loop.start(self)
+        if not status_loop.is_running():
+            status_loop.start(self)
 
 
     def status_list(self):

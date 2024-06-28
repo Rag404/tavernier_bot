@@ -129,7 +129,8 @@ def get_room(channel: VoiceChannel) -> Optional[Room]:
     if not channel:
         return
 
-    result = col.find_one({"_id": channel.id}, {"_id": 0})
+    # Retrieve room from database, without including the id and guild fields
+    result = col.find_one({"_id": channel.id}, {"_id": 0, "guild": 0})
 
     if result:
         result["leader"] = channel.guild.get_member(result.get("leader"))

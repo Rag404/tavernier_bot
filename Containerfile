@@ -1,4 +1,4 @@
-FROM dhi.io/python:3-debian-sfw-ent-dev AS build-stage
+FROM docker.io/library/python:3.15.0b2-trixie AS build-stage
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -10,7 +10,7 @@ RUN python -m venv /app/venv
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-FROM dhi.io/python:3-debian-sfw-ent-dev AS runtime-stage
+FROM docker.io/library/python:3.15.0b2-trixie AS runtime-stage
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1

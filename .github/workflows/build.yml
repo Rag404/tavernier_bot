@@ -1,0 +1,38 @@
+name: Build and Push Container for Bot
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Weekly on Sunday
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Image
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: tavernier-bot
+          tags: latest
+          containerfiles: ./Containerfile
+
+      - name: Log in to GHCR
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push to GHCR
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: tavernier-bot           
+          tags: latest                 
+          registry: ghcr.io/an-eagle    
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}

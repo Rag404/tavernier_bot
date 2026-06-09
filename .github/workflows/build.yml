@@ -40,12 +40,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Dynamically constructs the target registry URL using the github.repository context
       - name: Push Architecture Tag to GHCR
         uses: redhat-actions/push-to-registry@v2
         with:
           image: tavernier-bot           
           tags: ${{ matrix.arch }}                 
-          registry: ghcr.io/an-eagle    
+          registry: ghcr.io/${{ github.repository }}    
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -64,10 +65,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Links the separate x86 and ARM images under the single 'latest' pointer
+      # Lowercases the repository context inline to ensure compatibility with standard container registries
       - name: Create and Push Multi-Arch Manifest
         run: |
-          podman manifest create ghcr.io/an-eagle/tavernier-bot:latest
-          podman manifest add ghcr.io/an-eagle/tavernier-bot:latest docker://ghcr.io/an-eagle/tavernier-bot:amd64
-          podman manifest add ghcr.io/an-eagle/tavernier-bot:latest docker://ghcr.io/an-eagle/tavernier-bot:arm64
-          podman manifest push ghcr.io/an-eagle/tavernier-bot:latest docker://ghcr.io/an-eagle/tavernier-bot:latest
+          REPO_REF=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          
+          podman manifest create ${REPO_REF}:latest
+          podman manifest add ${REPO_REF}:latest docker://${REPO_REF}:amd64
+          podman manifest add ${REPO_REF}:latest docker://${REPO_REF}:arm64
+          podman manifest push ${REPO_REF}:latest docker://${REPO_REF}:latest

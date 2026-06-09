@@ -1,26 +1,37 @@
-name: Build and Push Container for Bot
+name: Build and Push Multi-Arch Container
+
 on:
-  schedule:
-    - cron: '0 0 * * 0' # Weekly on Sunday
   push:
     branches: [main]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+  # ==========================================
+  # JOB 1: Build Native Images Concurrently
+  # ==========================================
+  build-native:
+    name: Build Native Image (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: amd64        # This targets x86_64
+          - os: ubuntu-24.04-arm64
+            arch: arm64        # This targets native ARM64
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Build Image
+      - name: Build Image via Buildah
         id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
           image: tavernier-bot
-          tags: latest
+          tags: ${{ matrix.arch }}
           containerfiles: ./Containerfile
+          arch: ${{ matrix.arch }}
+          context: .
 
       - name: Log in to GHCR
         uses: redhat-actions/podman-login@v1
@@ -28,11 +39,35 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Push to GHCR
+
+      - name: Push Architecture Tag to GHCR
         uses: redhat-actions/push-to-registry@v2
         with:
           image: tavernier-bot           
-          tags: latest                 
+          tags: ${{ matrix.arch }}                 
           registry: ghcr.io/an-eagle    
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+  # ==========================================
+  # JOB 2: Create Unified Multi-Arch Manifest
+  # ==========================================
+  create-manifest:
+    name: Combine to Multi-Arch Manifest
+    needs: build-native
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GHCR
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Links the separate x86 and ARM images under the single 'latest' pointer
+      - name: Create and Push Multi-Arch Manifest
+        run: |
+          podman manifest create ghcr.io/an-eagle/tavernier-bot:latest
+          podman manifest add ghcr.io/an-eagle/tavernier-bot:latest docker://ghcr.io/an-eagle/tavernier-bot:amd64
+          podman manifest add ghcr.io/an-eagle/tavernier-bot:latest docker://ghcr.io/an-eagle/tavernier-bot:arm64
+          podman manifest push ghcr.io/an-eagle/tavernier-bot:latest docker://ghcr.io/an-eagle/tavernier-bot:latest

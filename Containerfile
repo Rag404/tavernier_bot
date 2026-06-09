@@ -1,4 +1,4 @@
-FROM docker.io/library/python:3.15.0b2-trixie AS build-stage
+FROM docker.io/library/python:3.14.5-trixie AS build-stage
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -9,7 +9,7 @@ RUN python -m venv bot-env
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-FROM docker.io/library/python:3.15.0b2-trixie AS runtime-stage
+FROM docker.io/library/python:3.14.5-trixie AS runtime-stage
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1

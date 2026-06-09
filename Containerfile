@@ -2,11 +2,10 @@ FROM docker.io/library/python:3.15.0b2-trixie AS build-stage
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PATH="/app/venv/bin:$PATH"
+ENV PATH="/bot-env/bin:$PATH"
 
-WORKDIR /app
 
-RUN python -m venv /app/venv
+RUN python -m venv bot-env
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -16,13 +15,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PATH="/bot-env/bin:$PATH"
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV PATH="/app/venv/bin:$PATH"
 
-WORKDIR /app
-
-COPY --from=build-stage /app/venv /app/venv
-COPY app.py .
+COPY --from=build-stage bot-env bot-env
+COPY tavernier_main.py .
 
 CMD ["python", "/app/tavernier_main.py"]

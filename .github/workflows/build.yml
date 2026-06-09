@@ -16,7 +16,7 @@ jobs:
         include:
           - os: ubuntu-latest
             arch: amd64        # This targets x86_64
-          - os: ubuntu-24.04-arm64
+          - os: ubuntu-24.04-arm
             arch: arm64        # This targets native ARM64
     runs-on: ${{ matrix.os }}
     steps:

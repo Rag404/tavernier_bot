@@ -1,0 +1,79 @@
+name: Build and Push Multi-Arch Container
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  # ==========================================
+  # JOB 1: Build Native Images Concurrently
+  # ==========================================
+  build-native:
+    name: Build Native Image (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: amd64        # This targets x86_64
+          - os: ubuntu-24.04-arm
+            arch: arm64        # This targets native ARM64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build Image via Buildah
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: tavernier-bot
+          tags: ${{ matrix.arch }}
+          containerfiles: ./Containerfile
+          arch: ${{ matrix.arch }}
+          context: .
+
+      - name: Log in to GHCR
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set Lowercase Registry Owner Environment Variable
+        run: |
+          echo "OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Push Architecture Tag to GHCR
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: tavernier-bot           
+          tags: ${{ matrix.arch }}                 
+          registry: ghcr.io/${{ env.OWNER_LC }}    
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+  # ==========================================
+  # JOB 2: Create Unified Multi-Arch Manifest
+  # ==========================================
+  create-manifest:
+    name: Combine to Multi-Arch Manifest
+    needs: build-native
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GHCR
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and Push Multi-Arch Manifest
+        run: |
+          # Safeguard: Convert the entire repository path to lowercase
+          REPO_REF=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          
+          podman manifest create ${REPO_REF}:latest
+          podman manifest add ${REPO_REF}:latest docker://${REPO_REF}:amd64
+          podman manifest add ${REPO_REF}:latest docker://${REPO_REF}:arm64
+          podman manifest push ${REPO_REF}:latest docker://${REPO_REF}:latest

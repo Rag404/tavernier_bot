@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN python -m venv bot-env
 
-RUN git clone https://github.com/An-Eagle/Tavernier-Bot /tmp/repo
+RUN git clone https://github.com/Rag404/Tavernier-Bot /tmp/repo
 
 RUN pip install --no-cache-dir -r /tmp/repo/requirements.txt
 
